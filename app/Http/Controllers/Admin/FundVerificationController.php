@@ -28,7 +28,7 @@ class FundVerificationController extends Controller
         // Yes, adding 4 hours shifts the 20:00 boundary to 00:00 of the next day.
 
         $days = Claim::select(
-                DB::raw('DATE(datetime(created_at, "+4 hours")) as financial_date'),
+                DB::raw('DATE(DATE_ADD(created_at, INTERVAL 4 HOUR)) as financial_date'),
                 DB::raw('COUNT(*) as total_vouchers'),
                 DB::raw('SUM(zakat_fitrah_amount + zakat_mal_amount + infaq_amount + sodaqoh_amount) as total_amount'),
                 DB::raw('SUM(CASE WHEN verification_status = "VERIFIED" THEN 1 ELSE 0 END) as verified_count'),
