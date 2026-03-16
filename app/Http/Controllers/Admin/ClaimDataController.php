@@ -90,4 +90,15 @@ class ClaimDataController extends Controller
 
         return redirect()->route('admin.claims.index')->with('success', 'Claim updated successfully.');
     }
+
+    /**
+     * Soft delete the claim.
+     */
+    public function destroy($id)
+    {
+        $claim = Claim::findOrFail($id);
+        $claim->delete();
+
+        return redirect()->route('admin.claims.index')->with('success', 'Claim deleted successfully.');
+    }
 }

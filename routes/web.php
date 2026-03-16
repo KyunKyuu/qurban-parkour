@@ -42,6 +42,7 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
     Route::get('/claims', [ClaimDataController::class, 'index'])->name('claims.index');
     Route::put('/claims/{id}', [ClaimDataController::class, 'update'])->name('claims.update');
     Route::get('/claims/{id}', [ClaimDataController::class, 'show'])->name('claims.show');
+    Route::delete('/claims/{id}', [ClaimDataController::class, 'destroy'])->name('claims.destroy');
     Route::get('/redeems', [RedeemDataController::class, 'index'])->name('redeems.index');
     Route::get('/redeems/{id}', [RedeemDataController::class, 'show'])->name('redeems.show');
 

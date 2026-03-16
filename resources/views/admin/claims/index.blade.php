@@ -72,8 +72,8 @@
 
         <!-- Claims Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+            <div class="overflow-x-auto overflow-y-hidden">
+                <table class="min-w-full divide-y divide-gray-200 whitespace-nowrap">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
@@ -129,6 +129,17 @@
                                     <span class="text-gray-300 mx-2">|</span>
                                     <button type="button" onclick="openEditModal({{ $claim->id }})"
                                         class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
+                                    <span class="text-gray-300 mx-2">|</span>
+                                    <button type="button" onclick="confirmDelete({{ $claim->id }})"
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium">Hapus</button>
+
+                                    <!-- Delete Form -->
+                                    <form id="deleteForm{{ $claim->id }}"
+                                        action="{{ route('admin.claims.destroy', $claim->id) }}"
+                                        method="POST" class="hidden">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </td>
                             </tr>
 
@@ -292,6 +303,13 @@
 
     @push('scripts')
         <script>
+            function confirmDelete(id) {
+                if (confirm('Apakah Anda yakin ingin menghapus claim ini? Data akan dihapus secara soft delete.')) {
+                    const form = document.getElementById('deleteForm' + id);
+                    form.submit();
+                }
+            }
+
             function openEditModal(id) {
                 document.getElementById('editModal' + id).classList.remove('hidden');
             }

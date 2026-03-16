@@ -22,13 +22,13 @@ class FundVerificationController extends Controller
         // Formula: DATE(SUBDATE(created_at, INTERVAL 20 HOUR)) ? No, wait.
         // Example: 15 Feb 19:00 -> 15 Feb.
         // Example: 15 Feb 21:00 -> 16 Feb.
-        // So we add 4 hours? 
+        // So we add 4 hours?
         // 15 Feb 19:00 + 4h = 15 Feb 23:00 -> Date: 15 Feb.
         // 15 Feb 21:00 + 4h = 16 Feb 01:00 -> Date: 16 Feb.
         // Yes, adding 4 hours shifts the 20:00 boundary to 00:00 of the next day.
-        
+
         $days = Claim::select(
-                DB::raw('DATE(ADDTIME(created_at, "04:00:00")) as financial_date'),
+                DB::raw('DATE(datetime(created_at, "+4 hours")) as financial_date'),
                 DB::raw('COUNT(*) as total_vouchers'),
                 DB::raw('SUM(zakat_fitrah_amount + zakat_mal_amount + infaq_amount + sodaqoh_amount) as total_amount'),
                 DB::raw('SUM(CASE WHEN verification_status = "VERIFIED" THEN 1 ELSE 0 END) as verified_count'),
