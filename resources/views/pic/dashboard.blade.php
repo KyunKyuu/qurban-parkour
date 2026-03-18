@@ -97,25 +97,33 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Voucher</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nominal Donasi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nominal Komisi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Zakat Fitrah</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Zakat Mal</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Infaq</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sodaqoh</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Donasi</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Komisi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($assignedVouchers as $voucher)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($assignedVouchers->currentPage() - 1) * $assignedVouchers->perPage() + $loop->iteration }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->batch->name ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim->name ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($assignedVouchers->currentPage() - 1) * $assignedVouchers->perPage() + $loop->iteration }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->batch->name ?? '-' }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim->name ?? '-' }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_fitrah_amount > 0)Rp {{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_mal_amount > 0)Rp {{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->infaq_amount > 0)Rp {{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->sodaqoh_amount > 0)Rp {{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-right">Rp {{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">Rp {{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                 Assigned
                             </span>
@@ -123,7 +131,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-assign.</td>
+                        <td colspan="11" class="px-4 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-assign.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -160,35 +168,43 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Voucher</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nominal Donasi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Claim</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Voucher</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Dana</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZF</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZM</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">I</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">S</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Claim</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Voucher</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Dana</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($claimedVouchers as $voucher)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($claimedVouchers->currentPage() - 1) * $claimedVouchers->perPage() + $loop->iteration }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($claimedVouchers->currentPage() - 1) * $claimedVouchers->perPage() + $loop->iteration }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $voucher->claim->name ?? '-' }}<br>
                             <span class="text-xs text-gray-400">{{ $voucher->claim->phone ?? '' }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">Rp {{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claimed_at ? $voucher->claimed_at->format('d M Y H:i') : '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_fitrah_amount > 0){{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_mal_amount > 0){{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->infaq_amount > 0){{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->sodaqoh_amount > 0){{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-green-600 font-medium text-right">{{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claimed_at ? $voucher->claimed_at->format('d M Y') : '-' }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 Claimed
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-3 py-4 whitespace-nowrap">
                             @if($voucher->claim->verification_status == 'VERIFIED')
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Dana Terverifikasi
+                                    Verified
                                 </span>
                             @elseif($voucher->claim->verification_status == 'ANOMALY')
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800" title="{{ $voucher->claim->verification_note }}">
@@ -196,14 +212,14 @@
                                 </span>
                             @else
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                    Pending Verifikasi
+                                    Pending
                                 </span>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-claim.</td>
+                        <td colspan="11" class="px-3 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-claim.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -233,13 +249,17 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Voucher</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nominal Donasi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Komisi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Redeem</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZF</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZM</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">I</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">S</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Komisi</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Redeem</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -249,19 +269,23 @@
                             @if($mv->status === 'REDEEMED')
                             @php $redeemedCount++; @endphp
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($redeemedVouchers->currentPage() - 1) * $redeemedVouchers->perPage() + $redeemedCount }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->merchant->name ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim->name ?? '-' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp {{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">Rp {{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->redeemed_at ? $mv->redeemed_at->format('d M Y H:i') : '-' }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($redeemedVouchers->currentPage() - 1) * $redeemedVouchers->perPage() + $redeemedCount }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->merchant->name ?? '-' }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim->name ?? '-' }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_fitrah_amount > 0){{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->zakat_mal_amount > 0){{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->infaq_amount > 0){{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim->sodaqoh_amount > 0){{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-right">{{ number_format((float)(($voucher->claim->zakat_fitrah_amount ?? 0) + ($voucher->claim->zakat_mal_amount ?? 0) + ($voucher->claim->infaq_amount ?? 0) + ($voucher->claim->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm font-bold text-green-600 text-right">{{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
+                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->redeemed_at ? $mv->redeemed_at->format('d M Y') : '-' }}</td>
                             </tr>
                             @endif
                         @endforeach
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-redeem.</td>
+                        <td colspan="11" class="px-3 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-redeem.</td>
                     </tr>
                     @endforelse
                 </tbody>
