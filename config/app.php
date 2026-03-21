@@ -64,6 +64,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Claim Session Open
+    |--------------------------------------------------------------------------
+    |
+    | This setting determines whether the claim session is currently open.
+    | Set to false to close the claim session and redirect users to the closed page.
+    |
+    */
+
+    'claim_open' => env('CLAIM_OPEN', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -20,14 +20,19 @@ class ClaimController extends Controller
      * Show the claim form.
      *
      * @param string $code
-     * @return \Illuminate\View\View
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function show(string $code)
     {
+        // Check if claim session is closed
+        if (!config('app.claim_open', true)) {
+            return redirect()->route('public.claim-closed');
+        }
+
         try {
             $voucher = $this->claimService->validateVoucherForClaim($code);
             $pics = \App\Models\Pic::orderBy('name')->get();
-            
+
             return view('public.claim', [
                 'voucher' => $voucher,
                 'code' => $code,
@@ -39,6 +44,16 @@ class ClaimController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Show the claim closed page.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function closed()
+    {
+        return view('public.claim-closed');
     }
 
     /**

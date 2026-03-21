@@ -112,6 +112,7 @@ use App\Http\Controllers\Public\ClaimController;
 use App\Http\Controllers\Public\VoucherListController;
 
 Route::get('/claim/{code}', [ClaimController::class, 'show'])->name('public.claim');
+Route::get('/claim-closed', [ClaimController::class, 'closed'])->name('public.claim-closed');
 Route::post('/claim', [ClaimController::class, 'store'])
     ->middleware('throttle:10,1') // 10 requests per minute
     ->name('public.claim.store');
