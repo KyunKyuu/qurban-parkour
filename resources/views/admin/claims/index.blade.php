@@ -10,10 +10,16 @@
                 <h2 class="text-2xl font-bold text-gray-900">Claims Data</h2>
                 <p class="text-gray-600">Daftar semua klaim voucher</p>
             </div>
-            <a href="{{ route('admin.exports.claims') }}"
-                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                📥 Export CSV
-            </a>
+            <div class="flex space-x-2">
+                <button type="button" onclick="openCreateModal()"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                    ➕ Tambah Data Claim
+                </button>
+                <a href="{{ route('admin.exports.claims') }}"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    📥 Export CSV
+                </a>
+            </div>
         </div>
 
         <!-- Stats -->
@@ -301,6 +307,192 @@
         </div>
     </div>
 
+    <!-- Create Claim Modal -->
+    <div id="createModal" class="fixed inset-0 z-[100] hidden overflow-y-auto"
+        aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onclick="closeCreateModal()" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full max-h-[90vh] overflow-y-auto">
+                <form action="{{ route('admin.claims.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Tambah Data Claim Baru
+                            </h3>
+                            <button type="button" onclick="closeCreateModal()"
+                                class="text-gray-400 hover:text-gray-500">
+                                <span class="sr-only">Close</span>
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Error Messages -->
+                        @if($errors->any())
+                            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                                @foreach($errors->all() as $error)
+                                    <p class="whitespace-pre-line">{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Left Column -->
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-medium text-gray-900 border-b pb-1">Data Voucher & PIC</h4>
+
+                                <!-- Voucher Code -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Kode Voucher <span class="text-red-500">*</span></label>
+                                    <input type="text" name="code"
+                                        class="w-full px-3 py-2 border @error('code') border-red-500 @enderror border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Masukkan kode voucher" required>
+                                    @error('code')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- PIC Selection -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Pilih PIC <span class="text-red-500">*</span></label>
+                                    <select name="pic_id"
+                                        class="w-full px-3 py-2 border @error('pic_id') border-red-500 @enderror border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        required>
+                                        <option value="">-- Pilih PIC --</option>
+                                        @foreach($pics as $pic)
+                                            <option value="{{ $pic->id }}">{{ $pic->name }}{{ $pic->code ? ' (' . $pic->code . ')' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('pic_id')
+                                        <p class="mt-1 text-xs text-red-600 whitespace-pre-line">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <h4 class="text-sm font-medium text-gray-900 border-b pb-1 pt-2">Data Donor</h4>
+
+                                <!-- Name -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+                                    <input type="text" name="name"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 @error('name') border-red-500 @enderror"
+                                        placeholder="Masukkan nama lengkap" required>
+                                </div>
+
+                                <!-- Phone -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">No. HP <span class="text-red-500">*</span></label>
+                                    <input type="text" name="phone"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 @error('phone') border-red-500 @enderror"
+                                        placeholder="Contoh: 081234567890" required>
+                                </div>
+
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                                    <input type="email" name="email"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 @error('email') border-red-500 @enderror"
+                                        placeholder="nama@email.com" required>
+                                </div>
+
+                                <!-- Payment Method -->
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Metode Pembayaran <span class="text-red-500">*</span></label>
+                                    <select name="payment_method" id="payment_method"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 @error('payment_method') border-red-500 @enderror"
+                                        required>
+                                        <option value="cash">Cash</option>
+                                        <option value="transfer">Transfer</option>
+                                    </select>
+                                </div>
+
+                                <div id="transferFields" class="space-y-3 hidden">
+                                    <div>
+                                        <label class="block text-xs text-gray-700 mb-1">Transfer ke Mana <span class="text-red-500">*</span></label>
+                                        <input type="text" name="transfer_destination"
+                                            value="Blu 090109627811 a.n Ahmad Bustan Djatmadipura"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm cursor-not-allowed"
+                                            readonly>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-700 mb-1">Upload Bukti Transfer <span class="text-red-500">*</span></label>
+                                        <input type="file" name="transfer_proof"
+                                            accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500 @error('transfer_proof') border-red-500 @enderror">
+                                        <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, PDF. Maksimal 4MB.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Donations -->
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-medium text-gray-900 border-b pb-1">Nominal Penyaluran</h4>
+
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Zakat Fitrah (Rp)</label>
+                                    <input type="text" id="zakat_fitrah_amount" name="zakat_fitrah_amount_text"
+                                        class="currency-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Rp 0">
+                                    <input type="hidden" id="zakat_fitrah_amount_raw" name="zakat_fitrah_amount" value="0">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Zakat Mal (Rp)</label>
+                                    <input type="text" id="zakat_mal_amount" name="zakat_mal_amount_text"
+                                        class="currency-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Rp 0">
+                                    <input type="hidden" id="zakat_mal_amount_raw" name="zakat_mal_amount" value="0">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Infaq (Rp)</label>
+                                    <input type="text" id="infaq_amount" name="infaq_amount_text"
+                                        class="currency-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Rp 0">
+                                    <input type="hidden" id="infaq_amount_raw" name="infaq_amount" value="0">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Sodaqoh (Rp)</label>
+                                    <input type="text" id="sodaqoh_amount" name="sodaqoh_amount_text"
+                                        class="currency-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500"
+                                        placeholder="Rp 0">
+                                    <input type="hidden" id="sodaqoh_amount_raw" name="sodaqoh_amount" value="0">
+                                </div>
+
+                                <div class="pt-2">
+                                    <p class="text-xs text-gray-500">
+                                        Minimum total penyaluran Rp {{ number_format(config('app.min_claim_amount', 35000), 0, ',', '.') }}
+                                        untuk mendapatkan voucher merchant.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 flex flex-row-reverse space-x-2 space-x-reverse">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                            Simpan Claim
+                        </button>
+                        <button type="button" onclick="closeCreateModal()"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             function confirmDelete(id) {
@@ -308,6 +500,14 @@
                     const form = document.getElementById('deleteForm' + id);
                     form.submit();
                 }
+            }
+
+            function openCreateModal() {
+                document.getElementById('createModal').classList.remove('hidden');
+            }
+
+            function closeCreateModal() {
+                document.getElementById('createModal').classList.add('hidden');
             }
 
             function openEditModal(id) {
@@ -320,6 +520,22 @@
 
             // Format Rupiah Input Functionality
             document.addEventListener('DOMContentLoaded', function () {
+                // Payment method toggle for create modal
+                const paymentMethod = document.getElementById('payment_method');
+                const transferFields = document.getElementById('transferFields');
+
+                function toggleTransferFields() {
+                    const isTransfer = paymentMethod && paymentMethod.value === 'transfer';
+                    if (transferFields) {
+                        transferFields.classList.toggle('hidden', !isTransfer);
+                    }
+                }
+
+                if (paymentMethod) {
+                    paymentMethod.addEventListener('change', toggleTransferFields);
+                }
+
+                // Edit modal rupiah inputs
                 const rupiahInputs = document.querySelectorAll('.rupiah-input');
 
                 rupiahInputs.forEach(input => {
@@ -337,6 +553,69 @@
                         this.value = formatRupiah(val);
                     });
                 });
+
+                // Create modal currency inputs
+                const currencyInputs = document.querySelectorAll('.currency-input');
+
+                function formatRupiahWithPrefix(num) {
+                    if (!num || num === '0') return '';
+                    let str = num.toString();
+                    let formatted = '';
+                    let count = 0;
+                    for (let i = str.length - 1; i >= 0; i--) {
+                        if (count > 0 && count % 3 === 0) {
+                            formatted = '.' + formatted;
+                        }
+                        formatted = str[i] + formatted;
+                        count++;
+                    }
+                    return 'Rp ' + formatted;
+                }
+
+                function updateHiddenField(inputId, rawValue) {
+                    const hiddenField = document.getElementById(inputId + '_raw');
+                    if (hiddenField) {
+                        hiddenField.value = rawValue;
+                    }
+                }
+
+                currencyInputs.forEach(function(input) {
+                    input.addEventListener('input', function(e) {
+                        let value = this.value.replace(/\D/g, '');
+                        updateHiddenField(this.id, value || 0);
+                        this.value = formatRupiahWithPrefix(value);
+                    });
+
+                    input.addEventListener('keydown', function(e) {
+                        if ([8, 9, 27, 13, 35, 36, 37, 38, 39, 40, 46].indexOf(e.keyCode) !== -1 ||
+                            (e.ctrlKey && [65, 67, 86, 88].indexOf(e.keyCode) !== -1)) {
+                            return;
+                        }
+                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                            e.preventDefault();
+                        }
+                    });
+
+                    input.addEventListener('blur', function() {
+                        let value = this.value.replace(/\D/g, '');
+                        updateHiddenField(this.id, value || 0);
+                        this.value = formatRupiahWithPrefix(value);
+                    });
+
+                    let initialValue = input.value.replace(/\D/g, '');
+                    updateHiddenField(input.id, initialValue || 0);
+                });
+
+                // Update hidden fields before form submission
+                const createForm = document.querySelector('form[action="{{ route('admin.claims.store') }}"]');
+                if (createForm) {
+                    createForm.addEventListener('submit', function(e) {
+                        currencyInputs.forEach(function(input) {
+                            let value = input.value.replace(/\D/g, '');
+                            updateHiddenField(input.id, value || 0);
+                        });
+                    });
+                }
             });
 
             // Helper to format string numbers with period separators
@@ -355,10 +634,14 @@
                 return split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
             }
 
-            // Output error messages automatically if there's a validation error
-            @if($errors->any())
-                // Ideally we'd know WHICH claim failed, but since we're using a generic error bag
-                alert('Ada error saat menyimpan data. Silakan cek kembali inputan Anda.');
+            // Show success message
+            @if(session('success'))
+                alert('{{ session('success') }}');
+            @endif
+
+            // Auto-open modal if there are errors
+            @if($errors->any() || session('error'))
+                openCreateModal();
             @endif
         </script>
     @endpush
