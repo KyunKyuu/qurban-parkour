@@ -122,10 +122,14 @@
                             class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm @error('community_id') border-red-500 @enderror">
                             <option value="">-- Pilih komunitas --</option>
                             @foreach($communities as $community)
+                                @php
+                                    $otherPicKomunitas = $community->picKomunitas && (!isset($pic) || $community->picKomunitas->id !== $pic->id)
+                                        ? $community->picKomunitas
+                                        : null;
+                                @endphp
                                 <option value="{{ $community->id }}"
                                     {{ $currentCommunityId == $community->id ? 'selected' : '' }}>
-                                    {{ $community->name }} ({{ $community->code }})
-                                    @if($community->pic) · Kasie: {{ $community->pic->name }}@endif
+                                    {{ $community->name }}{{ $otherPicKomunitas ? ' [sudah: ' . $otherPicKomunitas->name . ']' : '' }}
                                 </option>
                             @endforeach
                         </select>

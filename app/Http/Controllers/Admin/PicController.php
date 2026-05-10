@@ -203,17 +203,11 @@ class PicController extends Controller
         }
     }
 
-    /** Communities available for PIC Komunitas assignment */
+    /** All active communities for PIC Komunitas assignment */
     protected function availableCommunities(?Pic $exclude = null): \Illuminate\Support\Collection
     {
         return Community::where('is_active', true)
-            ->with('pic')
-            ->where(function ($q) use ($exclude) {
-                $q->whereNull('pic_komunitas_id');
-                if ($exclude && $exclude->isKomunitas()) {
-                    $q->orWhere('pic_komunitas_id', $exclude->id);
-                }
-            })
+            ->with('picKomunitas')
             ->orderBy('name')
             ->get();
     }
