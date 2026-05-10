@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\figma\" -Recurse -File | ForEach-Object { $_.FullName })",
+      "Bash(php artisan *)",
+      "Bash(del \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\database\\\\seeders\\\\DashboardDataSeeder.php\")",
+      "Bash(del \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\database\\\\seeders\\\\DevelopmentSeeder.php\")",
+      "Bash(del \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\database\\\\seeders\\\\RealMerchantSeeder.php\")",
+      "Bash(xargs grep *)",
+      "Bash(php -r \"echo extension_loaded\\('gd'\\) ? 'GD OK' : 'GD not loaded';\")",
+      "Bash(php -r \"echo function_exists\\('imagettftext'\\) ? ', FreeType OK' : ', FreeType NOT available';\")",
+      "Bash(php -r ' *)",
+      "Bash(php -r \"require 'C:/Project/Laravel/ramadhan-voucher/vendor/autoload.php';\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\resources\\\\views\\\\pic\" -File -Recurse)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(php -m)",
+      "Bash(php -r \"echo QR_encode\\('test', 0, 'L'\\);\")"
+    ]
+  }
+}

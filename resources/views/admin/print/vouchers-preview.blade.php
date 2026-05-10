@@ -98,9 +98,9 @@
             <div class="voucher">
                 <!-- QR Code Section Only -->
                 <div class="qr-section">
-                    <div class="qr-code" id="qr-{{ $index }}" data-url="https://ramadhanberjaya.com/claim/{{ $voucher->code }}"></div>
+                    <div class="qr-code" id="qr-{{ $index }}" data-url="{{ rtrim(config('app.url'), '/') }}/claim/{{ $voucher->code }}"></div>
                     <div class="text-[8px] text-center font-bold leading-tight mt-1">
-                        ramadhanberjaya.com<br>/claim/{{ $voucher->code }}
+                        {{ parse_url(config('app.url'), PHP_URL_HOST) }}<br>/claim/{{ $voucher->code }}
                     </div>
                 </div>
             </div>

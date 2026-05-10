@@ -43,6 +43,7 @@
             margin-bottom: 2mm;
         }
 
+
         .qr-text {
             font-size: 10px;
             font-weight: bold;
@@ -55,9 +56,9 @@
     <div class="voucher-container">
         <!-- QR Section -->
         <div class="qr-section">
-            <img src="data:image/png;base64, {{ base64_encode(QrCode::format('png')->size(300)->margin(0)->generate('https://ramadhanberjaya.com/claim/' . $voucher->code)) }}" class="qr-code">
+            <img src="{{ $voucher->qr_png }}" class="qr-code" alt="QR Code">
             <div class="qr-text">
-                ramadhanberjaya.com<br>
+                {{ parse_url(config('app.url'), PHP_URL_HOST) }}<br>
                 /claim/{{ $voucher->code }}
             </div>
         </div>

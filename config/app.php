@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Ramadhan Berjaya'),
+    'name' => env('APP_NAME', 'Kurban Berdaya'),
     
     'logo' => env('APP_LOGO', 'images/logo.png'),
 
@@ -72,7 +72,7 @@ return [
     |
     */
 
-    'claim_open' => env('CLAIM_OPEN', false),
+    'claim_open' => env('CLAIM_OPEN', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -85,7 +85,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
 
     /*
     |--------------------------------------------------------------------------
@@ -98,7 +98,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('APP_LOCALE', 'id'),
 
     /*
     |--------------------------------------------------------------------------
@@ -111,7 +111,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'id'),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,357 +1,215 @@
 @extends('layouts.pic')
 
-@section('title', 'Dashboard PIC')
+@section('title', 'Dashboard Komunitas')
 
 @section('content')
+@php
+    $filterParams = request()->only(['date_from', 'date_to', 'category_type', 'certificate_status', 'search']);
+@endphp
 <div class="space-y-6">
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Assigned -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 text-blue-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Voucher Assigned</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ number_format($stats['assigned']) }}</p>
-                </div>
+
+    {{-- Hero --}}
+    <section class="relative overflow-hidden rounded-[2rem] bg-[#1a3628] px-7 py-8 text-[#f0ebe0] shadow-[0_24px_64px_rgba(26,54,40,0.28)]">
+        <div class="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-white/[0.03]"></div>
+        <div class="pointer-events-none absolute -left-8 bottom-0 h-40 w-40 rounded-full bg-white/[0.025]"></div>
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#a8c5b0]">PIC Workspace</p>
+                <h2 class="display-font mt-3 text-4xl leading-tight text-[#f0ebe0]">{{ $pic->name }}</h2>
+                <p class="mt-2 text-sm leading-6 text-[#a8c5b0]">Ringkasan kontribusi dan sertifikat komunitas yang Anda kelola.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('pic.data.export', array_merge($filterParams, $activeCommunityId ? ['community_id' => $activeCommunityId] : [])) }}"
+                   class="rounded-full bg-[#e8a23e] px-5 py-3 text-sm font-semibold text-[#1a3628] transition hover:bg-[#d4913a]">
+                    Export CSV
+                </a>
             </div>
         </div>
+    </section>
 
-        <!-- Claimed -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Voucher Claimed</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ number_format($stats['claimed']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Redeemed -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-green-100 text-green-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Voucher Redeemed</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ number_format($stats['redeemed']) }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Commission -->
-        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-teal-500">
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-teal-100 text-teal-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Total Keuntungan</p>
-                    <p class="text-lg font-semibold text-gray-900">Rp {{ number_format($stats['commission'], 0, ',', '.') }}</p>
-                </div>
-            </div>
+    {{-- Community Tabs --}}
+    @if($communities->isNotEmpty())
+    <div class="overflow-x-auto pb-1">
+        <div class="flex gap-2 min-w-max">
+            <a href="{{ route('pic.dashboard', $filterParams) }}"
+               class="rounded-full px-5 py-2.5 text-sm font-semibold transition {{ !$activeCommunityId ? 'bg-[#1a3628] text-[#f0ebe0]' : 'border border-[#c8c3b8] bg-white text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628]' }}">
+                Semua Komunitas
+            </a>
+            @foreach($communities as $community)
+            <a href="{{ route('pic.dashboard', array_merge($filterParams, ['community_id' => $community->id])) }}"
+               class="rounded-full px-5 py-2.5 text-sm font-semibold transition {{ $activeCommunityId === $community->id ? 'bg-[#1a3628] text-[#f0ebe0]' : 'border border-[#c8c3b8] bg-white text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628]' }}">
+                {{ $community->name }}
+            </a>
+            @endforeach
         </div>
     </div>
+    @endif
 
-    <!-- Tables using Tabs (Simplified visual separation) -->
-    
-    <!-- Assigned Vouchers -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h3 class="text-lg font-medium text-gray-900">Daftar Voucher Assigned</h3>
-            <div class="flex flex-wrap items-center gap-4">
-                <div class="flex items-center space-x-2">
-                    <label for="assigned_per_page" class="text-sm text-gray-600">Tampilkan:</label>
-                    <select id="assigned_per_page" onchange="window.location.href = '{{ route('pic.dashboard') }}?assigned_per_page=' + this.value + '&claimed_page={{ $claimedVouchers->currentPage() }}&redeemed_page={{ $redeemedVouchers->currentPage() }}&claimed_per_page={{ request('claimed_per_page', 10) }}&redeemed_per_page={{ request('redeemed_per_page', 10) }}'" class="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-1 border">
-                        <option value="10" {{ request('assigned_per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                        <option value="25" {{ request('assigned_per_page') == 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ request('assigned_per_page') == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ request('assigned_per_page') == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-                <div>
-                    <a href="{{ route('pic.vouchers.export') }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm inline-flex items-center transition">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Export PDF Voucher
-                    </a>
-                </div>
+    {{-- KPI --}}
+    <section class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-[1.6rem] border border-[#e5e0d4] bg-white p-5 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Total Kontribusi</p>
+            <p class="mt-3 text-3xl font-extrabold text-[#1a3628]">{{ number_format($stats['total_claims']) }}</p>
+            @if($activeCommunity)
+                <p class="mt-1 text-xs text-stone-400">{{ $activeCommunity->name }}</p>
+            @endif
+        </div>
+        <div class="rounded-[1.6rem] border border-[#e5e0d4] bg-white p-5 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Nominal Terkumpul</p>
+            <p class="mt-3 text-2xl font-extrabold text-[#1a3628]">Rp {{ number_format($stats['total_amount'], 0, ',', '.') }}</p>
+        </div>
+        <div class="rounded-[1.6rem] border border-[#e5e0d4] bg-white p-5 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Sertifikat Generated</p>
+            <p class="mt-3 text-3xl font-extrabold text-[#1a3628]">{{ number_format($stats['certificates_generated']) }}</p>
+        </div>
+    </section>
+
+    {{-- Export Voucher PDF --}}
+    @if($communities->isNotEmpty())
+    <section class="rounded-[1.8rem] border border-[#e5e0d4] bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Export Voucher</p>
+                <h3 class="mt-1.5 text-lg font-bold text-[#1a3628]">Unduh PDF voucher per komunitas</h3>
+                <p class="mt-1 text-sm text-stone-500">Satu file ZIP berisi satu PDF per voucher untuk komunitas yang dipilih.</p>
             </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Zakat Fitrah</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Zakat Mal</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Infaq</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sodaqoh</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Donasi</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Komisi</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($assignedVouchers as $voucher)
-                    <tr>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($assignedVouchers->currentPage() - 1) * $assignedVouchers->perPage() + $loop->iteration }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->batch->name ?? '-' }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim?->name ?? '-' }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_fitrah_amount > 0)Rp {{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_mal_amount > 0)Rp {{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->infaq_amount > 0)Rp {{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->sodaqoh_amount > 0)Rp {{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-right">Rp {{ number_format((float)(($voucher->claim?->zakat_fitrah_amount ?? 0) + ($voucher->claim?->zakat_mal_amount ?? 0) + ($voucher->claim?->infaq_amount ?? 0) + ($voucher->claim?->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">Rp {{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
-                        <td class="px-4 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                Assigned
-                            </span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="11" class="px-4 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-assign.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $assignedVouchers->appends(['claimed_page' => $claimedVouchers->currentPage(), 'redeemed_page' => $redeemedVouchers->currentPage(), 'assigned_per_page' => request('assigned_per_page', 10), 'claimed_per_page' => request('claimed_per_page', 10), 'redeemed_per_page' => request('redeemed_per_page', 10)])->links() }}
-        </div>
-    </div>
-
-    <!-- Claimed Vouchers -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h3 class="text-lg font-medium text-gray-900">Daftar Voucher Claimed (Belum Redeem)</h3>
-            <div class="flex flex-wrap items-center gap-4">
-                <div class="flex items-center space-x-2">
-                    <label for="claimed_per_page" class="text-sm text-gray-600">Tampilkan:</label>
-                    <select id="claimed_per_page" onchange="window.location.href = '{{ route('pic.dashboard') }}?claimed_per_page=' + this.value + '&assigned_page={{ $assignedVouchers->currentPage() }}&redeemed_page={{ $redeemedVouchers->currentPage() }}&assigned_per_page={{ request('assigned_per_page', 10) }}&redeemed_per_page={{ request('redeemed_per_page', 10) }}'" class="text-sm border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 p-1 border">
-                        <option value="10" {{ request('claimed_per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                        <option value="25" {{ request('claimed_per_page') == 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ request('claimed_per_page') == 50 ? 'selected' : '' }}>50</option>
-                        <option value="100" {{ request('claimed_per_page') == 100 ? 'selected' : '' }}>100</option>
-                    </select>
-                </div>
-                <button onclick="document.getElementById('exportModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-sm inline-flex items-center transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Export Data Excel
-                </button>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZF</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZM</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">I</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">S</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Claim</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Voucher</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Dana</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($claimedVouchers as $voucher)
-                    <tr>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($claimedVouchers->currentPage() - 1) * $claimedVouchers->perPage() + $loop->iteration }}</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $voucher->claim?->name ?? '-' }}<br>
-                            <span class="text-xs text-gray-400">{{ $voucher->claim?->phone ?? '' }}</span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_fitrah_amount > 0){{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_mal_amount > 0){{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->infaq_amount > 0){{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->sodaqoh_amount > 0){{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-green-600 font-medium text-right">{{ number_format((float)(($voucher->claim?->zakat_fitrah_amount ?? 0) + ($voucher->claim?->zakat_mal_amount ?? 0) + ($voucher->claim?->infaq_amount ?? 0) + ($voucher->claim?->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                        <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claimed_at ? $voucher->claimed_at->format('d M Y') : '-' }}</td>
-                        <td class="px-3 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Claimed
-                            </span>
-                        </td>
-                        <td class="px-3 py-4 whitespace-nowrap">
-                            @if($voucher->claim?->verification_status == 'VERIFIED')
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Verified
-                                </span>
-                            @elseif($voucher->claim?->verification_status == 'ANOMALY')
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800" title="{{ $voucher->claim?->verification_note }}">
-                                    Anomali
-                                </span>
-                            @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                    Pending
-                                </span>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="11" class="px-3 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-claim.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $claimedVouchers->appends(['assigned_page' => $assignedVouchers->currentPage(), 'redeemed_page' => $redeemedVouchers->currentPage(), 'claimed_per_page' => request('claimed_per_page', 10)])->links() }}
-        </div>
-    </div>
-
-    <!-- Redeemed Vouchers -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h3 class="text-lg font-medium text-gray-900">Daftar Voucher Redeemed (Komisi Cair)</h3>
-            <div class="flex items-center space-x-2">
-                <label for="redeemed_per_page" class="text-sm text-gray-600">Tampilkan:</label>
-                <select id="redeemed_per_page" onchange="window.location.href = '{{ route('pic.dashboard') }}?redeemed_per_page=' + this.value + '&assigned_page={{ $assignedVouchers->currentPage() }}&claimed_page={{ $claimedVouchers->currentPage() }}&assigned_per_page={{ request('assigned_per_page', 10) }}&claimed_per_page={{ request('claimed_per_page', 10) }}'" class="text-sm border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 p-1 border">
-                    <option value="10" {{ request('redeemed_per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                    <option value="25" {{ request('redeemed_per_page') == 25 ? 'selected' : '' }}>25</option>
-                    <option value="50" {{ request('redeemed_per_page') == 50 ? 'selected' : '' }}>50</option>
-                    <option value="100" {{ request('redeemed_per_page') == 100 ? 'selected' : '' }}>100</option>
+            <form method="GET" action="{{ route('pic.vouchers.export-pdf') }}" class="flex flex-wrap items-center gap-3">
+                <select name="community_id" required
+                    class="rounded-2xl border border-stone-300 px-4 py-3 text-sm min-w-[200px]">
+                    <option value="">Pilih komunitas…</option>
+                    @foreach($communities as $community)
+                        <option value="{{ $community->id }}">{{ $community->name }}</option>
+                    @endforeach
                 </select>
-                <span class="text-sm text-gray-600">data</span>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Voucher</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Donatur</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZF</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ZM</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">I</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">S</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Komisi</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Redeem</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @php $redeemedCount = 0; @endphp
-                    @forelse($redeemedVouchers as $voucher)
-                        @foreach($voucher->merchantVouchers as $mv)
-                            @if($mv->status === 'REDEEMED')
-                            @php $redeemedCount++; @endphp
-                            <tr>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ ($redeemedVouchers->currentPage() - 1) * $redeemedVouchers->perPage() + $redeemedCount }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $voucher->code }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->merchant->name ?? '-' }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $voucher->claim?->name ?? '-' }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_fitrah_amount > 0){{ number_format($voucher->claim->zakat_fitrah_amount, 0, ',', '.') }}@else -@endif</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->zakat_mal_amount > 0){{ number_format($voucher->claim->zakat_mal_amount, 0, ',', '.') }}@else -@endif</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->infaq_amount > 0){{ number_format($voucher->claim->infaq_amount, 0, ',', '.') }}@else -@endif</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 text-right">@if($voucher->claim && $voucher->claim->sodaqoh_amount > 0){{ number_format($voucher->claim->sodaqoh_amount, 0, ',', '.') }}@else -@endif</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-right">{{ number_format((float)(($voucher->claim?->zakat_fitrah_amount ?? 0) + ($voucher->claim?->zakat_mal_amount ?? 0) + ($voucher->claim?->infaq_amount ?? 0) + ($voucher->claim?->sodaqoh_amount ?? 0)), 0, ',', '.') }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm font-bold text-green-600 text-right">{{ number_format($voucher->commission_amount, 0, ',', '.') }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $mv->redeemed_at ? $mv->redeemed_at->format('d M Y') : '-' }}</td>
-                            </tr>
-                            @endif
-                        @endforeach
-                    @empty
-                    <tr>
-                        <td colspan="11" class="px-3 py-4 text-center text-sm text-gray-500">Belum ada voucher yang di-redeem.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $redeemedVouchers->appends(['assigned_page' => $assignedVouchers->currentPage(), 'claimed_page' => $claimedVouchers->currentPage(), 'redeemed_per_page' => request('redeemed_per_page', 10), 'assigned_per_page' => request('assigned_per_page', 10), 'claimed_per_page' => request('claimed_per_page', 10)])->links() }}
-        </div>
-    </div>
-
-
-</div>
-
-<!-- Export Modal -->
-<div id="exportModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Background overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('exportModal').classList.add('hidden')"></div>
-
-        <!-- Modal panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form action="{{ route('pic.data.export') }}" method="GET">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Export Data Pendataan
-                            </h3>
-                            <div class="mt-4 space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Tipe Data</label>
-                                    <select name="type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-2 border">
-                                        <option value="claimed">Data Claimed (Default)</option>
-                                        <option value="redeem">Data Redeem</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Dari Tanggal</label>
-                                        <input type="date" name="date_from" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Sampai Tanggal</label>
-                                        <input type="date" name="date_to" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm p-2 border">
-                                    </div>
-                                </div>
-                                <p class="text-xs text-gray-500 italic">* Kosongkan tanggal untuk export semua data (all time).</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Download Excel (CSV)
-                    </button>
-                    <button type="button" onclick="document.getElementById('exportModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Batal
-                    </button>
-                </div>
+                <button type="submit"
+                    class="rounded-full bg-[#1a3628] px-5 py-3 text-sm font-semibold text-[#e8a23e] transition hover:bg-[#0f2d1e]">
+                    Download ZIP
+                </button>
             </form>
         </div>
-    </div>
+    </section>
+    @endif
+
+    {{-- Category Stats + Claims Table --}}
+    <section class="grid gap-6 lg:grid-cols-[0.38fr_0.62fr]">
+
+        {{-- Ringkasan Kategori --}}
+        <div class="rounded-[1.8rem] border border-[#e5e0d4] bg-white p-6 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Ringkasan Kategori</p>
+            <h3 class="mt-1.5 text-lg font-bold text-[#1a3628]">
+                {{ $activeCommunity ? $activeCommunity->name : 'Semua Komunitas' }}
+            </h3>
+
+            <div class="mt-5 divide-y divide-[#f0ebe0]">
+                @forelse($categoryStats as $category)
+                    <div class="flex items-center justify-between py-4">
+                        <div>
+                            <p class="font-semibold text-[#1a3628]">{{ $category['label'] }}</p>
+                            <p class="text-xs text-stone-400">{{ number_format($category['total_claims']) }} kontribusi</p>
+                        </div>
+                        <p class="font-bold text-[#1a3628]">Rp {{ number_format($category['total_amount'], 0, ',', '.') }}</p>
+                    </div>
+                @empty
+                    <p class="py-6 text-sm text-stone-400">Belum ada data kontribusi.</p>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- Claims Table --}}
+        <div class="rounded-[1.8rem] border border-[#e5e0d4] bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Daftar Kontribusi</p>
+                    <h3 class="mt-1.5 text-lg font-bold text-[#1a3628]">Kontribusi terbaru</h3>
+                </div>
+            </div>
+
+            <form method="GET" class="mt-5 flex flex-wrap gap-3">
+                @if($activeCommunityId)
+                    <input type="hidden" name="community_id" value="{{ $activeCommunityId }}">
+                @endif
+                <input type="date" name="date_from" value="{{ request('date_from') }}"
+                    class="rounded-2xl border border-stone-300 px-4 py-3 text-sm">
+                <input type="date" name="date_to" value="{{ request('date_to') }}"
+                    class="rounded-2xl border border-stone-300 px-4 py-3 text-sm">
+                <select name="category_type" class="rounded-2xl border border-stone-300 px-4 py-3 text-sm">
+                    <option value="">Semua kategori</option>
+                    @foreach($pricingOptions as $category)
+                        <option value="{{ $category['key'] }}" {{ request('category_type') === $category['key'] ? 'selected' : '' }}>
+                            {{ $category['label'] }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="certificate_status" class="rounded-2xl border border-stone-300 px-4 py-3 text-sm">
+                    <option value="">Semua sertifikat</option>
+                    <option value="generated" {{ request('certificate_status') === 'generated' ? 'selected' : '' }}>Sudah generated</option>
+                    <option value="missing" {{ request('certificate_status') === 'missing' ? 'selected' : '' }}>Belum generated</option>
+                </select>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email, kode voucher…"
+                    class="rounded-2xl border border-stone-300 px-4 py-3 text-sm flex-1 min-w-[200px]">
+                <button type="submit"
+                    class="rounded-full bg-[#1a3628] px-5 py-3 text-sm font-semibold text-[#e8a23e]">
+                    Filter
+                </button>
+                @if(request()->hasAny(['date_from', 'date_to', 'category_type', 'certificate_status', 'search']))
+                    <a href="{{ route('pic.dashboard', $activeCommunityId ? ['community_id' => $activeCommunityId] : []) }}"
+                       class="rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-stone-700">Reset</a>
+                @endif
+            </form>
+
+            <div class="mt-5 overflow-x-auto">
+                <table class="min-w-full text-left text-sm">
+                    <thead class="text-stone-400">
+                        <tr>
+                            <th class="pb-3 pr-4 font-semibold">Peserta</th>
+                            <th class="pb-3 pr-4 font-semibold">Kategori</th>
+                            <th class="pb-3 pr-4 font-semibold">Nominal</th>
+                            <th class="pb-3 pr-4 font-semibold">Sertifikat</th>
+                            <th class="pb-3 font-semibold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#f0ebe0]">
+                        @forelse($claims as $claim)
+                            <tr class="align-top">
+                                <td class="py-4 pr-4">
+                                    <p class="font-semibold text-[#1a3628]">{{ $claim->name }}</p>
+                                    <p class="text-xs text-stone-400">{{ $claim->email }}</p>
+                                    <p class="mt-1">
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold {{ $claim->initial_voucher_id ? 'bg-stone-100 text-stone-600' : 'bg-sky-100 text-sky-700' }}">
+                                            {{ $claim->initial_voucher_id ? 'Voucher PIC' : 'Direct web' }}
+                                        </span>
+                                    </p>
+                                </td>
+                                <td class="py-4 pr-4 text-stone-700">{{ $claim->display_category_label }}</td>
+                                <td class="py-4 pr-4 font-semibold text-[#1a3628]">
+                                    Rp {{ number_format($claim->contribution_amount ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td class="py-4 pr-4">
+                                    <span class="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold {{ $claim->certificate_generated_at ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500' }}">
+                                        {{ $claim->certificate_generated_at ? 'Generated' : 'Belum' }}
+                                    </span>
+                                </td>
+                                <td class="py-4">
+                                    <a href="{{ route('pic.claims.certificate', $claim->id) }}"
+                                       class="rounded-full border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628] transition">
+                                        Sertifikat
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-stone-400">Belum ada kontribusi dengan filter ini.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($claims->hasPages())
+                <div class="mt-5 border-t border-[#f0ebe0] pt-4">{{ $claims->links() }}</div>
+            @endif
+        </div>
+    </section>
+
 </div>
 @endsection

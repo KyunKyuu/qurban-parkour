@@ -3,115 +3,128 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\InitialVoucher;
 use App\Models\Claim;
-use App\Models\MerchantVoucher;
 use App\Models\Pic;
-use App\Models\Merchant;
+use App\Services\QurbanPricingService;
+use App\Services\QurbanSettingsService;
+use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
-    /**
-     * Show the admin dashboard.
-     */
+    public function __construct(
+        protected QurbanPricingService $pricingService,
+        protected QurbanSettingsService $settingsService
+    ) {
+    }
+
     public function index()
     {
-        // KPI Calculations
+        $amountExpression = $this->amountExpression();
         $kpis = [
-            'total_vouchers_generated' => InitialVoucher::count(),
-            'total_assigned' => InitialVoucher::where('status', 'ASSIGNED')->count(),
-            'total_claimed' => InitialVoucher::where('status', 'CLAIMED')->count(),
             'total_claims' => Claim::count(),
-            'total_merchant_vouchers' => MerchantVoucher::count(),
-            'total_redeemed' => MerchantVoucher::where('status', 'REDEEMED')->count(),
+            'total_participants' => Claim::distinct('email')->count('email'),
+            'total_amount' => (float) Claim::selectRaw("COALESCE(SUM({$amountExpression}), 0) AS total_amount")->value('total_amount'),
+            'total_certificates' => Claim::whereNotNull('certificate_generated_at')->count(),
             'total_pics' => Pic::count(),
             'active_pics' => Pic::where('is_active', true)->count(),
-            'total_merchants' => Merchant::count(),
-            'active_merchants' => Merchant::where('is_active', true)->count(),
         ];
 
-        // Calculate conversion rates
-        $kpis['claim_rate'] = $kpis['total_assigned'] > 0 
-            ? round(($kpis['total_claimed'] / $kpis['total_assigned']) * 100, 1)
-            : 0;
-
-        $kpis['redeem_rate'] = $kpis['total_merchant_vouchers'] > 0
-            ? round(($kpis['total_redeemed'] / $kpis['total_merchant_vouchers']) * 100, 1)
-            : 0;
-
-        // Recent claims (last 5)
-        $recentClaims = Claim::with('initialVoucher.pic')
+        $recentClaims = Claim::with(['initialVoucher.pic', 'pic'])
             ->latest()
-            ->take(5)
+            ->take(6)
             ->get();
 
-        // Recent redemptions (last 5)
-        $recentRedemptions = MerchantVoucher::with(['merchant', 'redeemedBy'])
-            ->where('status', 'REDEEMED')
-            ->latest('redeemed_at')
-            ->take(5)
+        $recentCertificates = Claim::with(['initialVoucher.pic', 'pic'])
+            ->whereNotNull('certificate_generated_at')
+            ->latest('certificate_generated_at')
+            ->take(6)
             ->get();
 
-        // Donation Stats
-        $donations = [
-            'zakat_fitrah' => Claim::sum('zakat_fitrah_amount'),
-            'zakat_mal' => Claim::sum('zakat_mal_amount'),
-            'infaq' => Claim::sum('infaq_amount'),
-            'sodaqoh' => Claim::sum('sodaqoh_amount'),
-        ];
-        $donations['total'] = $donations['zakat_fitrah'] + $donations['zakat_mal'] + $donations['infaq'] + $donations['sodaqoh'];
+        $categoryStats = Claim::selectRaw(
+            "COALESCE(category_label, 'Legacy Contribution') AS label, COUNT(*) AS total_claims, COALESCE(SUM({$amountExpression}), 0) AS total_amount"
+        )
+            ->groupBy('label')
+            ->orderByDesc('total_amount')
+            ->get();
 
-        // Chart Data (Last 30 Days)
         $endDate = now();
         $startDate = now()->subDays(29);
-        
-        $dailyStats = Claim::selectRaw('DATE(created_at) as date, 
-                SUM(zakat_fitrah_amount) as zakat_fitrah,
-                SUM(zakat_mal_amount) as zakat_mal,
-                SUM(infaq_amount) as infaq, 
-                SUM(sodaqoh_amount) as sodaqoh')
+
+        $dailyStats = Claim::selectRaw(
+            "DATE(created_at) AS date, COALESCE(SUM({$amountExpression}), 0) AS total_amount, COUNT(*) AS total_claims"
+        )
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('date')
             ->orderBy('date')
             ->get()
             ->keyBy('date');
 
-        // Prepare chart structure with zero-filling
         $chartLabels = [];
-        $chartData = [
-            'zakat_fitrah' => [],
-            'zakat_mal' => [],
-            'infaq' => [],
-            'sodaqoh' => []
-        ];
+        $chartData = [];
+        $chartClaims = [];
 
         for ($i = 0; $i < 30; $i++) {
             $date = $startDate->copy()->addDays($i)->format('Y-m-d');
             $chartLabels[] = $startDate->copy()->addDays($i)->format('d M');
-            
+
             $dayStat = $dailyStats[$date] ?? null;
-            $chartData['zakat_fitrah'][] = $dayStat ? $dayStat->zakat_fitrah : 0;
-            $chartData['zakat_mal'][] = $dayStat ? $dayStat->zakat_mal : 0;
-            $chartData['infaq'][] = $dayStat ? $dayStat->infaq : 0;
-            $chartData['sodaqoh'][] = $dayStat ? $dayStat->sodaqoh : 0;
+            $chartData[] = $dayStat ? (float) $dayStat->total_amount : 0;
+            $chartClaims[] = $dayStat ? (int) $dayStat->total_claims : 0;
         }
 
-        // Fund Verification Stats
-        $fundStats = [
-            'verified' => Claim::where('verification_status', 'VERIFIED')
-                ->sum(\Illuminate\Support\Facades\DB::raw('zakat_fitrah_amount + zakat_mal_amount + infaq_amount + sodaqoh_amount')),
-            
-            'pending' => Claim::where('verification_status', 'PENDING')
-                ->sum(\Illuminate\Support\Facades\DB::raw('zakat_fitrah_amount + zakat_mal_amount + infaq_amount + sodaqoh_amount')),
-            
-            'anomaly' => Claim::where('verification_status', 'ANOMALY')
-                ->sum(\Illuminate\Support\Facades\DB::raw('zakat_fitrah_amount + zakat_mal_amount + infaq_amount + sodaqoh_amount')),
-                
-            'verified_count' => Claim::where('verification_status', 'VERIFIED')->count(),
-            'pending_count' => Claim::where('verification_status', 'PENDING')->count(),
-            'anomaly_count' => Claim::where('verification_status', 'ANOMALY')->count(),
+        $paymentStats = Claim::selectRaw(
+            "payment_method, COUNT(*) AS total_claims, COALESCE(SUM({$amountExpression}), 0) AS total_amount"
+        )
+            ->groupBy('payment_method')
+            ->get();
+
+        $topPics = Claim::with(['initialVoucher.pic', 'pic'])
+            ->get()
+            ->groupBy(function (Claim $claim) {
+                return $claim->pic?->name ?? $claim->initialVoucher?->pic?->name ?? 'Tanpa PIC';
+            })
+            ->map(function (Collection $claims, string $picName) {
+                return [
+                    'name' => $picName,
+                    'total_claims' => $claims->count(),
+                    'total_amount' => $claims->sum(fn (Claim $claim) => $claim->total_donation_amount),
+                ];
+            })
+            ->sortByDesc('total_amount')
+            ->take(5)
+            ->values();
+
+        $pricingOptions = $this->pricingService->options();
+        $settings = $this->settingsService->current();
+
+        $patunganPool = [
+            'total_collected' => (float) Claim::where('category_type', 'PATUNGAN')->sum('contribution_amount'),
+            'claim_count' => Claim::where('category_type', 'PATUNGAN')->count(),
         ];
 
-        return view('admin.dashboard', compact('kpis', 'recentClaims', 'recentRedemptions', 'donations', 'chartLabels', 'chartData', 'fundStats'));
+        $patunganTargetLabels = collect($this->pricingService->patunganTargets())
+            ->map(fn (string $key) => $settings['categories'][$key]['label'] ?? $key)
+            ->values();
+
+        return view('admin.dashboard', compact(
+            'kpis',
+            'recentClaims',
+            'recentCertificates',
+            'categoryStats',
+            'paymentStats',
+            'chartLabels',
+            'chartData',
+            'chartClaims',
+            'topPics',
+            'patunganPool',
+            'pricingOptions',
+            'settings',
+            'patunganTargetLabels'
+        ));
+    }
+
+    protected function amountExpression(): string
+    {
+        return 'COALESCE(contribution_amount, COALESCE(zakat_fitrah_amount, 0) + COALESCE(zakat_mal_amount, 0) + COALESCE(infaq_amount, 0) + COALESCE(sodaqoh_amount, 0))';
     }
 }

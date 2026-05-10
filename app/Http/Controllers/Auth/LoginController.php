@@ -23,7 +23,7 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'role' => 'required|in:MERCHANT,SUPERADMIN,PIC',
+            'role' => 'required|in:SUPERADMIN,PIC',
             'email' => 'required|email',
             'password' => 'required',
         ]);
@@ -49,8 +49,6 @@ class LoginController extends Controller
             // Redirect based on role
             if ($user->role === 'SUPERADMIN') {
                 return redirect()->intended(route('admin.dashboard'));
-            } elseif ($user->role === 'MERCHANT') {
-                return redirect()->intended(route('merchant.dashboard'));
             } elseif ($user->role === 'PIC') {
                 return redirect()->intended(route('pic.dashboard'));
             }

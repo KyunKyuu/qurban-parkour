@@ -17,36 +17,41 @@ class InitialVoucherAssignService
      * @return int Number of vouchers assigned
      * @throws \Exception
      */
-    public function assign(int $picId, int $qty, ?int $batchId = null): int
+    public function assign(int $picId, int $qty, ?int $batchId = null, ?int $communityId = null): int
     {
-        return DB::transaction(function () use ($picId, $qty, $batchId) {
-            // Validate PIC is active
+        return DB::transaction(function () use ($picId, $qty, $batchId, $communityId) {
             $pic = Pic::findOrFail($picId);
             if (!$pic->is_active) {
                 throw new \Exception('PIC is not active');
             }
 
-            // Query unassigned vouchers
+            // Pastikan community milik PIC yang dipilih
+            if ($communityId !== null) {
+                $communityBelongsToPic = $pic->communities()->where('id', $communityId)->exists();
+                if (!$communityBelongsToPic) {
+                    throw new \Exception('Komunitas tidak ditemukan untuk PIC ini.');
+                }
+            }
+
             $query = InitialVoucher::where('status', 'UNASSIGNED');
-            
+
             if ($batchId) {
                 $query->where('batch_id', $batchId);
             }
 
-            // Get available vouchers
             $vouchers = $query->limit($qty)->get();
 
             if ($vouchers->count() < $qty) {
                 throw new \Exception('Not enough unassigned vouchers available. Available: ' . $vouchers->count());
             }
 
-            // Update vouchers
             $voucherIds = $vouchers->pluck('id')->toArray();
-            
+
             InitialVoucher::whereIn('id', $voucherIds)->update([
-                'status' => 'ASSIGNED',
+                'status'          => 'ASSIGNED',
                 'assigned_pic_id' => $picId,
-                'updated_at' => now(),
+                'community_id'    => $communityId,
+                'updated_at'      => now(),
             ]);
 
             return count($voucherIds);

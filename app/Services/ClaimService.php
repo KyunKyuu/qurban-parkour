@@ -4,27 +4,19 @@ namespace App\Services;
 
 use App\Models\Claim;
 use App\Models\InitialVoucher;
+use App\Models\Pic;
 use App\Support\CodeGenerator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class ClaimService
 {
-    protected $merchantVoucherGenerator;
-
-    public function __construct(MerchantVoucherGenerator $merchantVoucherGenerator)
-    {
-        $this->merchantVoucherGenerator = $merchantVoucherGenerator;
+    public function __construct(
+        protected QurbanPricingService $pricingService,
+        protected CertificateService $certificateService
+    ) {
     }
 
-    /**
-     * Validate if a voucher code can be claimed.
-     *
-     * @param string $code
-     * @return InitialVoucher
-     * @throws ValidationException
-     */
     public function validateVoucherForClaim(string $code): InitialVoucher
     {
         $voucher = InitialVoucher::with('pic')
@@ -33,16 +25,16 @@ class ClaimService
 
         if (!$voucher) {
             throw ValidationException::withMessages([
-                'code' => 'Voucher tidak ditemukan.',
+                'code' => 'Kode kontribusi tidak ditemukan.',
             ]);
         }
 
         if ($voucher->status !== 'ASSIGNED') {
             $message = match ($voucher->status) {
-                'UNASSIGNED' => 'Voucher belum di-assign ke PIC.',
-                'CLAIMED' => 'Voucher sudah pernah diklaim.',
-                'VOID' => 'Voucher sudah tidak berlaku.',
-                default => 'Voucher tidak dapat diklaim.',
+                'UNASSIGNED' => 'Kode belum di-assign ke PIC.',
+                'CLAIMED' => 'Kode sudah pernah dipakai.',
+                'VOID' => 'Kode sudah tidak berlaku.',
+                default => 'Kode tidak dapat dipakai.',
             };
 
             throw ValidationException::withMessages([
@@ -52,129 +44,64 @@ class ClaimService
 
         if (!$voucher->assigned_pic_id) {
             throw ValidationException::withMessages([
-                'code' => 'Voucher belum di-assign ke PIC.',
+                'code' => 'Kode belum di-assign ke PIC.',
             ]);
         }
 
         return $voucher;
     }
 
-    /**
-     * Process claim atomically.
-     *
-     * @param string $code
-     * @param int $picId
-     * @param string $name
-     * @param string $email
-     * @param string|null $phone
-     * @param float $zakatFitrahAmount
-     * @param float $zakatMalAmount
-     * @param float $infaqAmount
-     * @param float $sodaqohAmount
-     * @param string $paymentMethod
-     * @param string|null $transferDestination
-     * @param string|null $transferProofPath
-     * @return Claim
-     * @throws ValidationException
-     */
-    public function processClaim(
-        string $code,
-        int $picId,
-        string $name,
-        string $email,
-        ?string $phone = null,
-        float $zakatFitrahAmount = 0,
-        float $zakatMalAmount = 0,
-        float $infaqAmount = 0,
-        float $sodaqohAmount = 0,
-        string $paymentMethod = 'cash',
-        ?string $transferDestination = null,
-        ?string $transferProofPath = null
-    ): Claim
+    public function processClaim(array $payload, ?string $code = null): Claim
     {
-        return DB::transaction(function () use (
-            $code,
-            $picId,
-            $name,
-            $email,
-            $phone,
-            $zakatFitrahAmount,
-            $zakatMalAmount,
-            $infaqAmount,
-            $sodaqohAmount,
-            $paymentMethod,
-            $transferDestination,
-            $transferProofPath
-        ) {
-            // Lock the voucher row for update
-            $voucher = InitialVoucher::where('code', $code)
-                ->lockForUpdate()
-                ->first();
+        $claim = DB::transaction(function () use ($payload, $code) {
+            $voucher = $code
+                ? $this->lockVoucherForContribution($code, $payload['pic_id'] ?? null)
+                : $this->createDirectVoucher((int) ($payload['pic_id'] ?? 0));
 
-            // Re-validate after lock (prevent race condition)
-            if (!$voucher || $voucher->status !== 'ASSIGNED') {
-                throw ValidationException::withMessages([
-                    'code' => 'Voucher tidak dapat diklaim. Mungkin sudah diklaim oleh orang lain.',
-                ]);
-            }
+            $selection = $this->pricingService->resolveSelection(
+                $payload['category_type'],
+                isset($payload['contribution_amount']) ? (float) $payload['contribution_amount'] : null,
+                $payload['patungan_target'] ?? null
+            );
 
-            // Validate PIC matches voucher
-            if ($voucher->assigned_pic_id != $picId) {
-                throw ValidationException::withMessages([
-                    'pic_id' => 'Voucher ini tidak di-assign ke PIC yang Anda pilih. Silakan pilih PIC yang benar.',
-                ]);
-            }
+            $isTransfer = ($payload['payment_method'] ?? 'cash') === 'transfer';
 
-            // Generate unique public token
-            $publicToken = $this->generateUniquePublicToken();
-            $isTransfer = $paymentMethod === 'transfer';
-
-            // Create claim record
-            $claimPayload = [
+            $claim = Claim::create([
                 'initial_voucher_id' => $voucher->id,
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'zakat_fitrah_amount' => $zakatFitrahAmount,
-                'zakat_mal_amount' => $zakatMalAmount,
-                'infaq_amount' => $infaqAmount,
-                'sodaqoh_amount' => $sodaqohAmount,
-                'payment_method' => $paymentMethod,
-                'transfer_destination' => $isTransfer ? $transferDestination : null,
-                'transfer_proof_path' => $isTransfer ? $transferProofPath : null,
-                'public_token' => $publicToken,
-            ];
+                'pic_id' => $voucher->assigned_pic_id,
+                'name' => $payload['name'],
+                'email' => $payload['email'],
+                'phone' => $payload['phone'] ?? null,
+                'category_type' => $selection['category_type'],
+                'category_label' => $selection['category_label'],
+                'patungan_target' => $selection['patungan_target'],
+                'unit_price_snapshot' => $selection['unit_price_snapshot'],
+                'contribution_amount' => $selection['contribution_amount'],
+                'instagram_username' => $this->normalizeInstagram($payload['instagram_username'] ?? null),
+                'subsidy_amount' => $selection['subsidy_amount'],
+                'zakat_fitrah_amount' => 0,
+                'zakat_mal_amount' => 0,
+                'infaq_amount' => 0,
+                'sodaqoh_amount' => 0,
+                'payment_method' => $payload['payment_method'] ?? 'cash',
+                'transfer_destination' => $isTransfer ? ($payload['transfer_destination'] ?? null) : null,
+                'transfer_proof_path' => $isTransfer ? ($payload['transfer_proof_path'] ?? null) : null,
+                'public_token' => $this->generateUniquePublicToken(),
+                'verification_status' => $isTransfer ? 'PENDING' : 'VERIFIED',
+                'verified_at' => $isTransfer ? null : now(),
+            ]);
 
-            // Backward/forward compatible for environments where claims.pic_id may or may not exist.
-            if (Schema::hasColumn('claims', 'pic_id')) {
-                $claimPayload['pic_id'] = $picId;
-            }
-
-            $claim = Claim::create($claimPayload);
-
-            // Update voucher status to CLAIMED
             $voucher->update([
                 'status' => 'CLAIMED',
                 'claimed_at' => now(),
             ]);
 
-            $minClaimAmount = (float) config('app.min_claim_amount', 35000);
-            $totalAmount = $zakatFitrahAmount + $zakatMalAmount + $infaqAmount + $sodaqohAmount;
-
-            // Generate merchant vouchers only if minimum total is met
-            if ($totalAmount >= $minClaimAmount) {
-                $this->merchantVoucherGenerator->generateForClaim($voucher);
-            }
-
             return $claim;
         });
+
+        return $this->certificateService->ensureGenerated($claim);
     }
 
-    /**
-     * Generate unique public token.
-     *
-     * @return string
-     */
     protected function generateUniquePublicToken(): string
     {
         do {
@@ -184,17 +111,113 @@ class ClaimService
         return $token;
     }
 
-    /**
-     * Get claim by public token.
-     *
-     * @param string $token
-     * @return Claim|null
-     */
     public function getClaimByToken(string $token): ?Claim
     {
         return Claim::with([
             'initialVoucher.pic',
-            'merchantVouchers.merchant.offer.images',
+            'pic',
         ])->where('public_token', $token)->first();
+    }
+
+    public function downloadCertificate(Claim $claim)
+    {
+        return $this->certificateService->download($claim);
+    }
+
+    protected function lockVoucherForContribution(string $code, ?int $picId = null): InitialVoucher
+    {
+        $voucher = InitialVoucher::where('code', $code)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$voucher || $voucher->status !== 'ASSIGNED') {
+            throw ValidationException::withMessages([
+                'code' => 'Kode kontribusi tidak dapat dipakai. Mungkin sudah digunakan oleh peserta lain.',
+            ]);
+        }
+
+        if (!$voucher->assigned_pic_id) {
+            throw ValidationException::withMessages([
+                'code' => 'Kode kontribusi belum terhubung ke PIC.',
+            ]);
+        }
+
+        if ($picId && (int) $voucher->assigned_pic_id !== (int) $picId) {
+            throw ValidationException::withMessages([
+                'pic_id' => 'PIC yang dipilih tidak sesuai dengan kode kontribusi.',
+            ]);
+        }
+
+        return $voucher;
+    }
+
+    protected function createDirectVoucher(int $picId = 0): InitialVoucher
+    {
+        $pic = $picId > 0
+            ? Pic::find($picId)
+            : $this->resolveDefaultPic();
+
+        if (!$pic) {
+            throw ValidationException::withMessages([
+                'pic_id' => 'PIC default untuk web belum tersedia.',
+            ]);
+        }
+
+        return InitialVoucher::create([
+            'batch_id' => null,
+            'code' => $this->generateUniqueVoucherCode(),
+            'status' => 'ASSIGNED',
+            'assigned_pic_id' => $pic->id,
+        ]);
+    }
+
+    protected function resolveDefaultPic(): Pic
+    {
+        $defaultName = config('qurban.default_pic_name');
+        $defaultEmail = config('qurban.default_pic_email');
+
+        $pic = Pic::query()
+            ->where(function ($query) use ($defaultName, $defaultEmail) {
+                if ($defaultName) {
+                    $query->where('name', $defaultName);
+                }
+
+                if ($defaultEmail) {
+                    if ($defaultName) {
+                        $query->orWhere('email', $defaultEmail);
+                    } else {
+                        $query->where('email', $defaultEmail);
+                    }
+                }
+            })
+            ->first();
+
+        if ($pic) {
+            return $pic;
+        }
+
+        return Pic::create([
+            'name' => config('qurban.default_pic_label'),
+            'code' => 'WEB-DIRECT',
+            'email' => $defaultEmail,
+            'password' => bcrypt(CodeGenerator::makeToken(16)),
+            'is_active' => true,
+        ]);
+    }
+
+    protected function generateUniqueVoucherCode(): string
+    {
+        do {
+            $code = 'QB' . CodeGenerator::make(12);
+        } while (InitialVoucher::where('code', $code)->exists());
+
+        return $code;
+    }
+
+    protected function normalizeInstagram(?string $instagram): ?string
+    {
+        $instagram = trim((string) $instagram);
+
+        return $instagram === '' ? null : ltrim($instagram, '@');
     }
 }

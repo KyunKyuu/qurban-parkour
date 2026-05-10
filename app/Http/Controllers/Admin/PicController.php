@@ -74,7 +74,7 @@ class PicController extends Controller
     {
         // Load vouchers with claim and batch relationships
         $pic->load(['initialVouchers' => function ($query) {
-            $query->with(['claim', 'batch'])
+            $query->with(['claim', 'batch', 'community'])
                 ->orderByRaw("CASE WHEN status = 'ASSIGNED' THEN 1 WHEN status = 'CLAIMED' THEN 2 ELSE 3 END")
                 ->orderBy('code');
         }]);
@@ -84,11 +84,9 @@ class PicController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total' => $pic->initialVouchers->count(),
+            'total'    => $pic->initialVouchers->count(),
             'assigned' => $assignedVouchers->count(),
-            'claimed' => $claimedVouchers->count(),
-            'commission_claimed' => $claimedVouchers->sum('commission_amount'),
-            'commission_pending' => $assignedVouchers->sum('commission_amount'),
+            'claimed'  => $claimedVouchers->count(),
         ];
 
         return view('admin.pics.show', compact('pic', 'stats'));

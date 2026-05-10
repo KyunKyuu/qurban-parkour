@@ -17,13 +17,12 @@ class InitialVoucher extends Model
         'code',
         'status',
         'assigned_pic_id',
-        'commission_amount',
+        'community_id',
         'claimed_at',
     ];
 
     protected $casts = [
         'claimed_at' => 'datetime',
-        'commission_amount' => 'decimal:2',
     ];
 
     /**
@@ -40,6 +39,15 @@ class InitialVoucher extends Model
     public function pic(): BelongsTo
     {
         return $this->belongsTo(Pic::class, 'assigned_pic_id');
+    }
+
+    /**
+     * Get the community this voucher belongs to.
+     * Null = voucher dari PJ default (langsung via WA, tanpa komunitas).
+     */
+    public function community(): BelongsTo
+    {
+        return $this->belongsTo(Community::class);
     }
 
     /**

@@ -1,75 +1,54 @@
 @extends('layouts.admin')
 
-@section('title', 'Generate Vouchers')
+@section('title', 'Generate Voucher')
 
 @section('content')
-<div class="bg-white shadow rounded-lg p-6">
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate Vouchers</h2>
+<div class="rounded-[1.8rem] bg-white border border-emerald-100 p-6 shadow-sm max-w-xl">
+    <h2 class="text-xl font-bold text-emerald-950 mb-6">Generate Voucher Baru</h2>
 
-    <form method="POST" action="{{ route('admin.vouchers.generate') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.vouchers.generate') }}" class="space-y-5">
         @csrf
 
-        <!-- Count Input -->
         <div>
-            <label for="count" class="block text-sm font-medium text-gray-700">Number of Vouchers</label>
-            <input 
-                type="number" 
-                name="count" 
-                id="count" 
-                min="1" 
+            <label for="count" class="block text-sm font-medium text-emerald-800">Jumlah Voucher</label>
+            <input
+                type="number"
+                name="count"
+                id="count"
+                min="1"
                 max="1000"
                 value="{{ old('count', 10) }}"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm @error('count') border-red-500 @enderror"
+                class="mt-1 block w-full rounded-xl border border-emerald-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 @error('count') border-red-400 @enderror"
                 required
             >
             @error('count')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
             @enderror
-            <p class="mt-1 text-sm text-gray-500">Maximum: 1000 vouchers per batch</p>
+            <p class="mt-1 text-xs text-emerald-500">Maksimal 1.000 voucher per batch</p>
         </div>
 
-        <!-- Batch Name Input -->
         <div>
-            <label for="batch_name" class="block text-sm font-medium text-gray-700">Batch Name (Optional)</label>
-            <input 
-                type="text" 
-                name="batch_name" 
-                id="batch_name" 
+            <label for="batch_name" class="block text-sm font-medium text-emerald-800">Nama Batch (Opsional)</label>
+            <input
+                type="text"
+                name="batch_name"
+                id="batch_name"
                 value="{{ old('batch_name') }}"
-                placeholder="e.g., Ramadhan Week 1"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm @error('batch_name') border-red-500 @enderror"
+                placeholder="cth. Qurban Parkour Wave 1"
+                class="mt-1 block w-full rounded-xl border border-emerald-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 @error('batch_name') border-red-400 @enderror"
             >
             @error('batch_name')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
             @enderror
-            <p class="mt-1 text-sm text-gray-500">If empty, will auto-generate based on current date/time</p>
+            <p class="mt-1 text-xs text-emerald-500">Kosong = nama otomatis berdasarkan waktu generate</p>
         </div>
 
-        <!-- Commission Input -->
-        <div>
-            <label for="commission_amount" class="block text-sm font-medium text-gray-700">Komisi per Voucher (Rp)</label>
-            <input 
-                type="number" 
-                name="commission_amount" 
-                id="commission_amount" 
-                min="0"
-                step="1"
-                value="{{ old('commission_amount', 0) }}"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm @error('commission_amount') border-red-500 @enderror"
-            >
-            @error('commission_amount')
-                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-            @enderror
-            <p class="mt-1 text-sm text-gray-500">Komisi ini akan menempel ke voucher dan baru berlaku saat voucher diklaim.</p>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="flex items-center justify-end space-x-3">
-            <button 
+        <div class="flex justify-end pt-2">
+            <button
                 type="submit"
-                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="rounded-xl bg-emerald-700 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-                Generate Vouchers
+                Generate Voucher
             </button>
         </div>
     </form>

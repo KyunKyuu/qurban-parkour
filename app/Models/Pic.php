@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Pic extends Model
 {
@@ -30,7 +31,17 @@ class Pic extends Model
         return $this->hasMany(InitialVoucher::class, 'assigned_pic_id');
     }
 
-    public function user()
+    public function claims(): HasMany
+    {
+        return $this->hasMany(Claim::class);
+    }
+
+    public function communities(): HasMany
+    {
+        return $this->hasMany(Community::class);
+    }
+
+    public function user(): HasOne
     {
         return $this->hasOne(User::class, 'pic_id');
     }

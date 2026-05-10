@@ -1,42 +1,26 @@
 @extends('layouts.public')
 
-@section('title', 'Voucher Tidak Valid')
+@section('title', 'Kode Kontribusi Tidak Valid')
 
 @section('content')
-<div class="max-w-md mx-auto">
-    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden p-8 text-center">
-        <!-- Error Icon -->
-        <div class="text-6xl mb-4">❌</div>
-        
-        <!-- Error Title -->
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Voucher Tidak Valid</h2>
-        
-        <!-- Error Message -->
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            <p>{{ $error }}</p>
+<div class="mx-auto max-w-xl">
+    <div class="rounded-[2rem] border border-red-200 bg-white p-8 text-center shadow-sm">
+        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-4xl">!</div>
+        <h2 class="display-font mt-5 text-3xl text-stone-950">Kode kontribusi tidak bisa dipakai</h2>
+        <p class="mt-3 text-sm leading-7 text-stone-600">Sistem tidak dapat memproses kode berikut untuk flow kurban saat ini.</p>
+
+        <div class="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-4 text-left text-sm text-red-700">
+            {{ $error }}
         </div>
 
-        <!-- Voucher Code -->
-        <div class="mb-6">
-            <p class="text-sm text-gray-500 mb-1">Kode yang Anda masukkan:</p>
-            <p class="font-mono text-lg font-bold text-gray-900">{{ $code }}</p>
+        <div class="mt-5 rounded-2xl bg-stone-100 px-4 py-4">
+            <p class="text-xs uppercase tracking-[0.24em] text-stone-500">Kode yang dicek</p>
+            <p class="mt-2 font-mono text-lg font-bold text-stone-950">{{ $code }}</p>
         </div>
 
-        <!-- Help Text -->
-        <div class="text-sm text-gray-600 space-y-2">
-            <p><strong>Kemungkinan penyebab:</strong></p>
-            <ul class="text-left list-disc list-inside space-y-1">
-                <li>Voucher sudah pernah diklaim</li>
-                <li>Voucher belum di-assign ke PIC</li>
-                <li>Kode voucher salah atau tidak valid</li>
-            </ul>
-        </div>
-
-        <!-- Contact Info -->
-        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p class="text-sm text-gray-600">
-                Jika Anda yakin ini adalah kesalahan, silakan hubungi PIC yang memberikan voucher ini.
-            </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <a href="{{ route('public.contribute') }}" class="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-amber-100">Buka Form Direct Web</a>
+            <a href="{{ route('landing') }}" class="rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-stone-700">Kembali ke Beranda</a>
         </div>
     </div>
 </div>

@@ -18,6 +18,15 @@ class Claim extends Model
         'name',
         'email',
         'phone',
+        'category_type',
+        'category_label',
+        'patungan_target',
+        'unit_price_snapshot',
+        'contribution_amount',
+        'instagram_username',
+        'certificate_path',
+        'certificate_generated_at',
+        'subsidy_amount',
         'zakat_fitrah_amount',
         'zakat_mal_amount',
         'infaq_amount',
@@ -36,6 +45,10 @@ class Claim extends Model
         'zakat_mal_amount' => 'decimal:2',
         'infaq_amount' => 'decimal:2',
         'sodaqoh_amount' => 'decimal:2',
+        'unit_price_snapshot' => 'decimal:2',
+        'contribution_amount' => 'decimal:2',
+        'subsidy_amount' => 'decimal:2',
+        'certificate_generated_at' => 'datetime',
         'verified_at' => 'datetime',
     ];
 
@@ -44,7 +57,40 @@ class Claim extends Model
      */
     public function getTotalDonationAmountAttribute(): float
     {
-        return $this->zakat_fitrah_amount + $this->zakat_mal_amount + $this->infaq_amount + $this->sodaqoh_amount;
+        $newAmount = (float) ($this->contribution_amount ?? 0);
+        if ($newAmount > 0) {
+            return $newAmount;
+        }
+
+        return (float) $this->zakat_fitrah_amount
+            + (float) $this->zakat_mal_amount
+            + (float) $this->infaq_amount
+            + (float) $this->sodaqoh_amount;
+    }
+
+    public function getDisplayCategoryLabelAttribute(): string
+    {
+        if ($this->category_label) {
+            return $this->category_label;
+        }
+
+        return 'Legacy Contribution';
+    }
+
+    public function getPatunganProgressPercentAttribute(): int
+    {
+        if ($this->category_type !== 'PATUNGAN' || !$this->unit_price_snapshot) {
+            return 100;
+        }
+
+        return min(100, (int) round(($this->total_donation_amount / (float) $this->unit_price_snapshot) * 100));
+    }
+
+    public function getCertificateFilenameAttribute(): string
+    {
+        $safeName = trim(preg_replace('/[^A-Za-z0-9\-]+/', '-', $this->name ?? 'peserta'), '-');
+
+        return 'sertifikat-apresiasi-' . ($safeName ?: 'peserta') . '.png';
     }
 
     /**
@@ -53,6 +99,11 @@ class Claim extends Model
     public function initialVoucher(): BelongsTo
     {
         return $this->belongsTo(InitialVoucher::class);
+    }
+
+    public function pic(): BelongsTo
+    {
+        return $this->belongsTo(Pic::class);
     }
 
     /**

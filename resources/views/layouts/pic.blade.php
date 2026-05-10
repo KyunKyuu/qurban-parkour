@@ -4,154 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'PIC Panel') - {{ config('app.name') }}</title>
+    <title>@yield('title', 'Panel PIC') - {{ config('app.name') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        .sidebar-transition {
-            transition: transform 0.3s ease-in-out;
-        }
-        
-        /* Mobile: sidebar hidden by default */
+        body { font-family: 'Manrope', sans-serif; }
+        .display-font { font-family: 'Fraunces', serif; }
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
         @media (max-width: 768px) {
-            #sidebar {
-                transform: translateX(-100%);
-            }
-            
-            #sidebar.sidebar-open {
-                transform: translateX(0);
-            }
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.sidebar-open { transform: translateX(0); }
         }
-        
-        /* Desktop: sidebar always visible */
         @media (min-width: 769px) {
-            #sidebar {
-                transform: translateX(0) !important;
-            }
+            #sidebar { transform: translateX(0) !important; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-emerald-50 text-stone-900">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar-transition fixed md:static inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-teal-700 to-teal-900 text-white flex flex-col">
-            <!-- Logo/Brand -->
-            <div class="flex items-center justify-between h-14 px-4 bg-teal-800 border-b border-teal-600 flex-shrink-0">
-                <div class="flex items-center space-x-2">
-                    @if(config('app.logo') && file_exists(public_path(config('app.logo'))))
-                        <img src="{{ asset(config('app.logo')) }}" alt="Logo" class="h-8 w-auto">
-                    @else
-                        <span class="text-xl">☪</span>
-                    @endif
-                    <h1 class="text-base font-bold">{{ config('app.name') }}</h1>
+        <aside id="sidebar" class="sidebar-transition fixed md:static inset-y-0 left-0 z-50 w-72 bg-emerald-950 text-emerald-50 flex flex-col">
+            <div class="flex items-center justify-between h-16 px-5 border-b border-white/10">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.28em] text-amber-200/80">PIC Workspace</p>
+                    <h1 class="display-font text-xl">{{ config('app.name') }}</h1>
                 </div>
-                <button id="closeSidebar" class="md:hidden text-white hover:text-gray-200">
+                <button id="closeSidebar" class="md:hidden text-emerald-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- User Info -->
-            <div class="px-4 py-3 border-b border-teal-600 flex-shrink-0">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center font-bold text-sm">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
-                    <div>
-                        <p class="font-semibold text-xs">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-teal-200">{{ auth()->user()->role }}</p>
-                    </div>
-                </div>
+            <div class="px-5 py-4 border-b border-white/10">
+                <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
+                <p class="text-xs text-emerald-200/70">{{ auth()->user()->role }}</p>
             </div>
 
-            <!-- Navigation Menu -->
-            <nav class="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-                <a href="{{ route('pic.dashboard') }}" class="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-teal-600 transition {{ request()->routeIs('pic.dashboard') ? 'bg-teal-600' : '' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span class="font-medium">Dashboard</span>
+            <nav class="flex-1 px-3 py-4 space-y-3">
+                <a href="{{ route('pic.dashboard') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 transition {{ request()->routeIs('pic.dashboard') ? 'bg-amber-300 text-emerald-950' : 'hover:bg-white/5 text-emerald-100' }}">
+                    <span class="text-xs font-bold uppercase tracking-[0.2em]">DB</span>
+                    <span class="font-medium">Dashboard Komunitas</span>
                 </a>
+<div class="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-emerald-100/80">
+                    <p class="font-semibold text-emerald-50">Channel PIC tetap aktif.</p>
+                    <p class="mt-2 leading-5">Kontribusi direct web masuk ke PIC default, sedangkan kontribusi berbasis kode tetap mengikuti PIC pada kode tersebut.</p>
+                </div>
             </nav>
 
-            <!-- Logout Button -->
-            <div class="px-4 py-4 border-t border-teal-600 flex-shrink-0">
+            <div class="px-4 py-4 border-t border-white/10">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-red-600 transition w-full text-left">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        <span class="font-medium">Logout</span>
+                    <button type="submit" class="w-full rounded-xl bg-white/5 px-4 py-3 text-left text-sm font-medium text-emerald-100 transition hover:bg-red-500 hover:text-white">
+                        Logout
                     </button>
                 </form>
             </div>
         </aside>
 
-        <!-- Overlay for mobile -->
-        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
 
-        <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Header -->
-            <header class="bg-white shadow-sm z-10">
+            <header class="bg-white/85 backdrop-blur border-b border-emerald-100">
                 <div class="flex items-center justify-between h-16 px-4 md:px-6">
-                    <div class="flex items-center space-x-4">
-                        <!-- Hamburger Menu Button -->
-                        <button id="menuButton" class="md:hidden text-gray-600 hover:text-gray-900 focus:outline-none">
+                    <div class="flex items-center gap-4">
+                        <button id="menuButton" class="md:hidden text-stone-700">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                             </svg>
                         </button>
-                        <h2 class="text-xl font-semibold text-gray-800">@yield('title', 'Dashboard')</h2>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.22em] text-emerald-700">PIC Panel</p>
+                            <h2 class="text-lg font-semibold">@yield('title', 'Dashboard')</h2>
+                        </div>
                     </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <span class="hidden md:inline text-sm text-gray-600">{{ now()->format('d M Y') }}</span>
-                    </div>
+                    <div class="hidden md:block text-sm text-stone-500">{{ now()->format('d M Y') }}</div>
                 </div>
             </header>
 
-            <!-- Flash Messages -->
             @if(session('success'))
-                <div class="mx-4 md:mx-6 mt-4">
-                    <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded relative" role="alert">
-                        <span class="block sm:inline">{{ session('success') }}</span>
-                    </div>
+                <div class="mx-4 md:mx-6 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                    {{ session('success') }}
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="mx-4 md:mx-6 mt-4">
-                    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded relative" role="alert">
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                    </div>
+                <div class="mx-4 md:mx-6 mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                    {{ session('error') }}
                 </div>
             @endif
 
-            <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 md:p-6">
                 @yield('content')
-                
-                <!-- Footer -->
-                <footer class="mt-auto pt-6 pb-2">
-                    <p class="text-center text-xs text-gray-500">
-                        Dibuat oleh <span class="font-semibold text-gray-700">Teguh Iqbal</span> © {{ date('Y') }}
-                    </p>
+                <footer class="mt-10 text-center text-xs text-stone-500">
+                    <p>{{ config('qurban.campaign_name') }} - PIC workspace</p>
                 </footer>
             </main>
         </div>
     </div>
 
     <script>
-        // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const menuButton = document.getElementById('menuButton');
         const closeSidebar = document.getElementById('closeSidebar');
@@ -167,27 +120,9 @@
             sidebarOverlay.classList.add('hidden');
         }
 
-        // Event listeners
-        menuButton.addEventListener('click', openSidebar);
-        closeSidebar.addEventListener('click', closeSidebarFunc);
-        sidebarOverlay.addEventListener('click', closeSidebarFunc);
-
-        // Close sidebar when clicking a link on mobile
-        const sidebarLinks = sidebar.querySelectorAll('a');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth < 768) {
-                    closeSidebarFunc();
-                }
-            });
-        });
-
-        // Close sidebar on window resize to desktop
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                closeSidebarFunc();
-            }
-        });
+        if (menuButton) menuButton.addEventListener('click', openSidebar);
+        if (closeSidebar) closeSidebar.addEventListener('click', closeSidebarFunc);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebarFunc);
     </script>
 </body>
 </html>

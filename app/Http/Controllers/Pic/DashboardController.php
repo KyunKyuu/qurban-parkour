@@ -3,242 +3,235 @@
 namespace App\Http\Controllers\Pic;
 
 use App\Http\Controllers\Controller;
+use App\Models\Claim;
 use App\Models\InitialVoucher;
-use Illuminate\Http\Request;
-
+use App\Models\Pic;
+use App\Services\CertificateService;
+use App\Services\QurbanExportService;
+use App\Services\QurbanPricingService;
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Encoder\Encoder as QrEncoder;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use ZipArchive;
-use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        $pic = auth()->user()->pic;
-
-        if (!$pic) {
-            abort(403, 'User is not associated with a PIC account');
-        }
-
-        // Stats
-        $stats = [
-            'assigned' => $pic->initialVouchers()->where('status', 'ASSIGNED')->count(),
-            'claimed' => $pic->initialVouchers()->where('status', 'CLAIMED')->count(),
-            'redeemed' => $pic->initialVouchers()->whereHas('merchantVouchers', function ($q) {
-                $q->where('status', 'REDEEMED');
-            })->count(),
-            'commission' => $pic->initialVouchers()
-                ->whereHas('merchantVouchers', function ($q) {
-                    $q->where('status', 'REDEEMED');
-                })
-                ->sum('commission_amount'),
-        ];
-
-        // Lists - using pagination and tabs could be better, but simplified for now
-        // Or we pass queries and let the view handle it?
-        // Let's get latest 5 or 10 for each category to display in dashboard, 
-        // or just all of them if the volume isn't huge yet.
-        // Given the requirement "berisi daftar voucher...", implying full lists or at least accessible.
-
-        $assignedPerPage = request()->input('assigned_per_page', 10);
-        $assignedVouchers = $pic->initialVouchers()
-            ->with(['batch', 'claim'])
-            ->where('status', 'ASSIGNED')
-            ->orderBy('created_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate($assignedPerPage, ['*'], 'assigned_page');
-
-        $claimedPerPage = request()->input('claimed_per_page', 10);
-        $claimedVouchers = $pic->initialVouchers()
-            ->with(['claim', 'merchantVouchers.merchant'])
-            ->where('status', 'CLAIMED')
-            ->orderBy('claimed_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate($claimedPerPage, ['*'], 'claimed_page');
-
-        $redeemedPerPage = request()->input('redeemed_per_page', 10);
-        $redeemedVouchers = $pic->initialVouchers()
-            ->whereHas('merchantVouchers', function ($q) {
-                $q->where('status', 'REDEEMED');
-            })
-            ->with([
-                'merchantVouchers' => function ($q) {
-                    $q->where('status', 'REDEEMED')->with('merchant');
-                },
-                'claim'
-            ])
-            ->orderBy('updated_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate($redeemedPerPage, ['*'], 'redeemed_page');
-
-        return view('pic.dashboard', compact('pic', 'stats', 'assignedVouchers', 'claimedVouchers', 'redeemedVouchers'));
+    public function __construct(
+        protected CertificateService $certificateService,
+        protected QurbanExportService $exportService,
+        protected QurbanPricingService $pricingService,
+    ) {
     }
 
-    public function exportVouchers()
+    public function index(Request $request)
     {
-        set_time_limit(300); // 5 minutes
-        ini_set('memory_limit', '512M');
-
         $pic = auth()->user()->pic;
-
         if (!$pic) {
             abort(403, 'User is not associated with a PIC account');
         }
 
-        $vouchers = $pic->initialVouchers()
-            ->where('status', 'ASSIGNED') // Only export ASSIGNED vouchers? Or all? User said "voucher yang di assign ke si pic tersebut". Usually means active ones to distribute.
-            // Let's assume all ASSIGNED ones for now. If they want claimed ones, they can ask.
-            // Actually, "export voucher" implies printing them for distribution, so ASSIGNED makes sense.
-            ->get();
+        $communities      = $pic->communities()->orderBy('name')->get();
+        $activeCommunityId = $request->filled('community_id') ? (int) $request->community_id : null;
+        $activeCommunity  = $activeCommunityId ? $communities->firstWhere('id', $activeCommunityId) : null;
 
-        if ($vouchers->isEmpty()) {
-            return back()->with('error', 'Tidak ada voucher yang tersedia untuk diexport.');
-        }
+        $baseQuery     = $this->claimsQuery($pic, $activeCommunityId);
+        $filteredQuery = $this->applyFilters(clone $baseQuery, $request);
 
-        $zip = new ZipArchive;
-        $zipFileName = 'vouchers_' . $pic->id . '_' . time() . '.zip';
-        $zipPath = storage_path('app/public/' . $zipFileName);
+        $stats         = $this->summarize(clone $filteredQuery);
+        $categoryStats = $this->buildCategoryStats((clone $filteredQuery)->get());
+        $claims        = $filteredQuery->latest()->paginate(15)->withQueryString();
+        $pricingOptions = $this->pricingService->options();
 
-        // Ensure directory exists
-        if (!file_exists(dirname($zipPath))) {
-            mkdir(dirname($zipPath), 0755, true);
-        }
-
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
-            foreach ($vouchers as $index => $voucher) {
-                $pdf = Pdf::loadView('pic.print.single-voucher', compact('voucher'))
-                    ->setPaper('a4', 'landscape');
-
-                $pdfContent = $pdf->output();
-                $filename = 'voucher_' . ($index + 1) . '_' . $voucher->code . '.pdf';
-                $zip->addFromString($filename, $pdfContent);
-            }
-            $zip->close();
-        } else {
-            return back()->with('error', 'Gagal membuat file ZIP.');
-        }
-
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        return view('pic.dashboard', compact(
+            'pic',
+            'communities',
+            'activeCommunityId',
+            'activeCommunity',
+            'stats',
+            'claims',
+            'categoryStats',
+            'pricingOptions',
+        ));
     }
 
     public function exportData(Request $request)
     {
         $pic = auth()->user()->pic;
-
         if (!$pic) {
             abort(403, 'User is not associated with a PIC account');
         }
 
-        $type = $request->input('type', 'claimed'); // Default: claimed
-        $dateFrom = $request->filled('date_from') ? \Carbon\Carbon::parse($request->date_from)->startOfDay() : null;
-        $dateTo = $request->filled('date_to') ? \Carbon\Carbon::parse($request->date_to)->endOfDay() : null;
+        $activeCommunityId = $request->filled('community_id') ? (int) $request->community_id : null;
+        $claims = $this->applyFilters($this->claimsQuery($pic, $activeCommunityId), $request)
+            ->latest()
+            ->get();
 
-        if ($type === 'redeem') {
-            $query = $pic->initialVouchers()
-                ->whereHas('merchantVouchers', function ($q) {
-                    $q->where('status', 'REDEEMED');
-                })
-                ->with([
-                    'merchantVouchers' => function ($q) {
-                        $q->where('status', 'REDEEMED')->with('merchant');
-                    },
-                    'claim'
-                ]);
+        $filename = 'kontribusi_pic_' . now()->format('Y-m-d_His') . '.csv';
 
-            if ($dateFrom) {
-                $query->whereHas('merchantVouchers', function ($q) use ($dateFrom) {
-                    $q->where('status', 'REDEEMED')->whereDate('redeemed_at', '>=', $dateFrom);
-                });
+        return response()->streamDownload(function () use ($claims) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $this->exportService->claimHeadings());
+            foreach ($claims as $claim) {
+                fputcsv($handle, $this->exportService->claimRow($claim));
             }
-            if ($dateTo) {
-                $query->whereHas('merchantVouchers', function ($q) use ($dateTo) {
-                    $q->where('status', 'REDEEMED')->whereDate('redeemed_at', '<=', $dateTo);
-                });
-            }
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
 
-            $vouchers = $query->get();
-            $filename = 'redeem_data_' . now()->format('Y-m-d_His') . '.csv';
-
-            return response()->streamDownload(function () use ($vouchers, $dateFrom, $dateTo) {
-                $handle = fopen('php://output', 'w');
-                fputcsv($handle, ['No', 'Voucher Code', 'Merchant', 'Donatur', 'Zakat Fitrah', 'Zakat Mal', 'Infaq', 'Sodaqoh', 'Total Donasi', 'Komisi', 'Tanggal Redeem']);
-
-                $count = 1;
-                foreach ($vouchers as $voucher) {
-                    foreach ($voucher->merchantVouchers as $mv) {
-                        if ($mv->status === 'REDEEMED') {
-                            // Extra check for date range in rows
-                            if ($dateFrom && $mv->redeemed_at->lt($dateFrom)) continue;
-                            if ($dateTo && $mv->redeemed_at->gt($dateTo)) continue;
-
-                            $zf = (float)($voucher->claim->zakat_fitrah_amount ?? 0);
-                            $zm = (float)($voucher->claim->zakat_mal_amount ?? 0);
-                            $inf = (float)($voucher->claim->infaq_amount ?? 0);
-                            $sod = (float)($voucher->claim->sodaqoh_amount ?? 0);
-                            $total = $zf + $zm + $inf + $sod;
-
-                            fputcsv($handle, [
-                                $count++,
-                                $voucher->code,
-                                $mv->merchant->name ?? '-',
-                                $voucher->claim->name ?? '-',
-                                $zf,
-                                $zm,
-                                $inf,
-                                $sod,
-                                $total,
-                                $voucher->commission_amount,
-                                $mv->redeemed_at ? $mv->redeemed_at->format('Y-m-d H:i:s') : '-'
-                            ]);
-                        }
-                    }
-                }
-                fclose($handle);
-            }, $filename, ['Content-Type' => 'text/csv']);
-        } else {
-            // Default: claimed
-            $query = $pic->initialVouchers()
-                ->whereIn('status', ['CLAIMED', 'REDEEMED']) // Redeemed also means it was claimed
-                ->with(['claim']);
-
-            if ($dateFrom) {
-                $query->whereDate('claimed_at', '>=', $dateFrom);
-            }
-            if ($dateTo) {
-                $query->whereDate('claimed_at', '<=', $dateTo);
-            }
-
-            $vouchers = $query->orderBy('claimed_at', 'desc')->get();
-            $filename = 'claimed_data_' . now()->format('Y-m-d_His') . '.csv';
-
-            return response()->streamDownload(function () use ($vouchers) {
-                $handle = fopen('php://output', 'w');
-                fputcsv($handle, ['No', 'Voucher Code', 'Donatur', 'Zakat Fitrah', 'Zakat Mal', 'Infaq', 'Sodaqoh', 'Total Donasi', 'Tanggal Claim', 'Status Voucher', 'Status Dana']);
-
-                $count = 1;
-                foreach ($vouchers as $voucher) {
-                    $zf = (float)($voucher->claim->zakat_fitrah_amount ?? 0);
-                    $zm = (float)($voucher->claim->zakat_mal_amount ?? 0);
-                    $inf = (float)($voucher->claim->infaq_amount ?? 0);
-                    $sod = (float)($voucher->claim->sodaqoh_amount ?? 0);
-                    $total = $zf + $zm + $inf + $sod;
-
-                    fputcsv($handle, [
-                        $count++,
-                        $voucher->code,
-                        $voucher->claim->name ?? '-',
-                        $zf,
-                        $zm,
-                        $inf,
-                        $sod,
-                        $total,
-                        $voucher->claimed_at ? $voucher->claimed_at->format('Y-m-d H:i:s') : '-',
-                        $voucher->status,
-                        $voucher->claim->verification_status ?? 'PENDING'
-                    ]);
-                }
-                fclose($handle);
-            }, $filename, ['Content-Type' => 'text/csv']);
+    public function exportVouchersPdf(Request $request)
+    {
+        $pic = auth()->user()->pic;
+        if (!$pic) {
+            abort(403, 'User is not associated with a PIC account');
         }
+
+        $communityId = $request->integer('community_id');
+        $community   = $pic->communities()->findOrFail($communityId);
+
+        $vouchers = InitialVoucher::where('assigned_pic_id', $pic->id)
+            ->where('community_id', $communityId)
+            ->orderBy('code')
+            ->get();
+
+        if ($vouchers->isEmpty()) {
+            return back()->with('error', 'Tidak ada voucher untuk komunitas ini.');
+        }
+
+        $zipPath = tempnam(sys_get_temp_dir(), 'pic_vouchers_') . '.zip';
+        $zip     = new ZipArchive();
+        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        foreach ($vouchers as $voucher) {
+            $claimUrl     = rtrim(config('app.url'), '/') . '/claim/' . $voucher->code;
+            $voucher->qr_png = $this->generateQrPng($claimUrl);
+
+            $pdf = Pdf::loadView('pic.print.single-voucher', ['voucher' => $voucher]);
+            $pdf->setPaper('a4', 'landscape');
+            $zip->addFromString('voucher-' . $voucher->code . '.pdf', $pdf->output());
+        }
+
+        $zip->close();
+
+        $filename = 'vouchers-' . Str::slug($community->name) . '-' . now()->format('Y-m-d') . '.zip';
+
+        return response()->download($zipPath, $filename, ['Content-Type' => 'application/zip'])
+            ->deleteFileAfterSend(true);
+    }
+
+    protected function generateQrPng(string $text, int $targetPx = 300): string
+    {
+        $qr     = QrEncoder::encode($text, ErrorCorrectionLevel::L(), 'UTF-8');
+        $matrix = $qr->getMatrix();
+        $size   = $matrix->getWidth();
+        $scale  = (int) max(1, floor($targetPx / $size));
+        $margin = $scale * 2;
+        $imgPx  = $size * $scale + $margin * 2;
+
+        $img   = imagecreatetruecolor($imgPx, $imgPx);
+        $white = imagecolorallocate($img, 255, 255, 255);
+        $black = imagecolorallocate($img, 0, 0, 0);
+        imagefill($img, 0, 0, $white);
+
+        for ($y = 0; $y < $size; $y++) {
+            for ($x = 0; $x < $size; $x++) {
+                if ($matrix->get($x, $y) !== 0) {
+                    $px = $margin + $x * $scale;
+                    $py = $margin + $y * $scale;
+                    imagefilledrectangle($img, $px, $py, $px + $scale - 1, $py + $scale - 1, $black);
+                }
+            }
+        }
+
+        ob_start();
+        imagepng($img);
+        $data = ob_get_clean();
+
+        return 'data:image/png;base64,' . base64_encode($data);
+    }
+
+    public function downloadCertificate($id)
+    {
+        $pic = auth()->user()->pic;
+        if (!$pic) {
+            abort(403, 'User is not associated with a PIC account');
+        }
+
+        $claim = $this->claimsQuery($pic)->findOrFail($id);
+
+        return $this->certificateService->download($claim);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    protected function claimsQuery(Pic $pic, ?int $communityId = null)
+    {
+        if ($communityId) {
+            return Claim::query()
+                ->with(['initialVoucher', 'pic'])
+                ->whereHas('initialVoucher', function ($q) use ($pic, $communityId) {
+                    $q->where('assigned_pic_id', $pic->id)
+                      ->where('community_id', $communityId);
+                });
+        }
+
+        return Claim::query()
+            ->with(['initialVoucher', 'pic'])
+            ->where(function ($q) use ($pic) {
+                $q->where('pic_id', $pic->id)
+                  ->orWhereHas('initialVoucher', fn ($vq) => $vq->where('assigned_pic_id', $pic->id));
+            });
+    }
+
+    protected function applyFilters($query, Request $request)
+    {
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        if ($request->filled('category_type')) {
+            $query->where('category_type', $request->category_type);
+        }
+        if ($request->certificate_status === 'generated') {
+            $query->whereNotNull('certificate_generated_at');
+        }
+        if ($request->certificate_status === 'missing') {
+            $query->whereNull('certificate_generated_at');
+        }
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                  ->orWhere('email', 'like', "%{$s}%")
+                  ->orWhere('instagram_username', 'like', "%{$s}%")
+                  ->orWhereHas('initialVoucher', fn ($vq) => $vq->where('code', 'like', "%{$s}%"));
+            });
+        }
+
+        return $query;
+    }
+
+    protected function summarize($query): array
+    {
+        return [
+            'total_claims'           => (clone $query)->count(),
+            'total_amount'           => (float) (clone $query)->sum('contribution_amount'),
+            'certificates_generated' => (clone $query)->whereNotNull('certificate_generated_at')->count(),
+        ];
+    }
+
+    protected function buildCategoryStats($claims): \Illuminate\Support\Collection
+    {
+        return $claims
+            ->groupBy(fn (Claim $c) => $c->display_category_label)
+            ->map(fn ($group, $label) => [
+                'label'        => $label,
+                'total_claims' => $group->count(),
+                'total_amount' => $group->sum(fn (Claim $c) => $c->total_donation_amount),
+            ])
+            ->values();
     }
 }

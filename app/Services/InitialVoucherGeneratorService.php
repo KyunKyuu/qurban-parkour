@@ -9,39 +9,26 @@ use Illuminate\Support\Facades\DB;
 
 class InitialVoucherGeneratorService
 {
-    /**
-     * Generate a batch of initial vouchers.
-     *
-     * @param int $count Number of vouchers to generate
-     * @param string|null $batchName Optional batch name
-     * @param int $adminId ID of the admin creating the batch
-     * @param float $commissionAmount Commission per voucher
-     * @return VoucherBatch
-     */
-    public function generate(int $count, ?string $batchName, int $adminId, float $commissionAmount = 0): VoucherBatch
+    public function generate(int $count, ?string $batchName, int $adminId): VoucherBatch
     {
-        return DB::transaction(function () use ($count, $batchName, $adminId, $commissionAmount) {
-            // Create the batch
+        return DB::transaction(function () use ($count, $batchName, $adminId) {
             $batch = VoucherBatch::create([
-                'name' => $batchName ?? 'Batch ' . now()->format('Y-m-d H:i:s'),
-                'generated_count' => $count,
+                'name'                => $batchName ?? 'Batch ' . now()->format('Y-m-d H:i:s'),
+                'generated_count'     => $count,
                 'created_by_admin_id' => $adminId,
             ]);
 
-            // Generate vouchers
             $vouchers = [];
             for ($i = 0; $i < $count; $i++) {
                 $vouchers[] = [
-                    'batch_id' => $batch->id,
-                    'code' => $this->generateUniqueCode(),
-                    'status' => 'UNASSIGNED',
-                    'commission_amount' => $commissionAmount,
+                    'batch_id'   => $batch->id,
+                    'code'       => $this->generateUniqueCode(),
+                    'status'     => 'UNASSIGNED',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
 
-            // Bulk insert
             InitialVoucher::insert($vouchers);
 
             return $batch;

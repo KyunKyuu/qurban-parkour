@@ -31,19 +31,13 @@ class InitialVoucherController extends Controller
         $validated = $request->validate([
             'count' => 'required|integer|min:1|max:1000',
             'batch_name' => 'nullable|string|max:100',
-            'commission_amount' => 'nullable|numeric|min:0',
         ]);
 
         try {
-            $commissionAmount = isset($validated['commission_amount'])
-                ? (float) $validated['commission_amount']
-                : 0;
-
             $batch = $this->generatorService->generate(
                 $validated['count'],
                 $validated['batch_name'] ?? null,
                 auth()->id(),
-                $commissionAmount
             );
 
             return redirect()

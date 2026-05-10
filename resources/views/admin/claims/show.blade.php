@@ -1,192 +1,114 @@
 @extends('layouts.admin')
 
-@section('title', 'Claim Details')
+@section('title', 'Detail Kontribusi')
 
 @section('content')
-    <div class="space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between">
+<div class="space-y-6">
+    <section class="rounded-[1.8rem] bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Claim Details</h2>
-                <p class="text-gray-600">Detail informasi klaim voucher</p>
+                <p class="text-sm uppercase tracking-[0.24em] text-stone-500">Participant Detail</p>
+                <h2 class="mt-2 text-3xl font-bold text-stone-950">{{ $claim->name }}</h2>
+                <p class="mt-2 text-sm text-stone-500">{{ $claim->display_category_label }} - {{ $claim->initialVoucher?->code ?? 'Direct web' }}</p>
             </div>
-            <a href="{{ route('admin.claims.index') }}"
-                class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
-                ← Back to Claims
-            </a>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('admin.claims.certificate', $claim->id) }}" class="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-amber-100">Unduh Sertifikat</a>
+                <a href="{{ route('admin.claims.index') }}" class="rounded-full border border-stone-300 px-5 py-3 text-sm font-semibold text-stone-700">Kembali</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+        <div class="space-y-6">
+            <div class="rounded-[1.8rem] bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-stone-950">Ringkasan Kontribusi</h3>
+                <dl class="mt-5 grid gap-4 md:grid-cols-2">
+                    <div class="rounded-[1.2rem] bg-stone-100 p-4">
+                        <dt class="text-xs uppercase tracking-[0.24em] text-stone-500">Kategori</dt>
+                        <dd class="mt-2 text-lg font-bold text-stone-950">{{ $claim->display_category_label }}</dd>
+                    </div>
+                    <div class="rounded-[1.2rem] bg-stone-100 p-4">
+                        <dt class="text-xs uppercase tracking-[0.24em] text-stone-500">Nominal</dt>
+                        <dd class="mt-2 text-lg font-bold text-stone-950">Rp {{ number_format($claim->total_donation_amount, 0, ',', '.') }}</dd>
+                    </div>
+                    <div class="rounded-[1.2rem] bg-stone-100 p-4">
+                        <dt class="text-xs uppercase tracking-[0.24em] text-stone-500">PIC</dt>
+                        <dd class="mt-2 text-lg font-bold text-stone-950">{{ $claim->pic?->name ?? $claim->initialVoucher?->pic?->name ?? '-' }}</dd>
+                    </div>
+                    <div class="rounded-[1.2rem] bg-stone-100 p-4">
+                        <dt class="text-xs uppercase tracking-[0.24em] text-stone-500">Metode Bayar</dt>
+                        <dd class="mt-2 text-lg font-bold text-stone-950">{{ strtoupper($claim->payment_method ?? 'cash') }}</dd>
+                    </div>
+                </dl>
+
+            </div>
+
+            <div class="rounded-[1.8rem] bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-stone-950">Status Sertifikat</h3>
+                <div class="mt-5 rounded-[1.2rem] bg-emerald-50 p-4">
+                    <p class="text-xs uppercase tracking-[0.24em] text-emerald-700">Sertifikat</p>
+                    <p class="mt-2 text-lg font-bold text-stone-950">{{ $claim->certificate_generated_at ? 'Generated' : 'Belum dibuat' }}</p>
+                    <p class="mt-2 text-sm text-stone-600">{{ optional($claim->certificate_generated_at)->format('d M Y H:i') ?: '-' }}</p>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Claim Info -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Claim Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Customer Name</label>
-                    <p class="text-lg font-semibold text-gray-900">{{ $claim->name }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Email</label>
-                    <p class="text-lg text-gray-900">{{ $claim->email }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">No. HP</label>
-                    <p class="text-lg text-gray-900">{{ $claim->phone ?? '-' }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Metode Pembayaran</label>
-                    <p class="text-lg text-gray-900">{{ strtoupper($claim->payment_method ?? 'cash') }}</p>
-                </div>
-                @if(($claim->payment_method ?? 'cash') === 'transfer')
+        <div class="space-y-6">
+            <div class="rounded-[1.8rem] bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-stone-950">Kontak Peserta</h3>
+                <dl class="mt-5 space-y-4 text-sm">
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Transfer ke</label>
-                        <p class="text-lg text-gray-900">{{ $claim->transfer_destination ?? '-' }}</p>
+                        <dt class="text-stone-500">Email</dt>
+                        <dd class="mt-1 font-semibold text-stone-950">{{ $claim->email }}</dd>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Bukti Transfer</label>
-                        @if($claim->transfer_proof_path)
-                            <a href="{{ asset('storage/' . $claim->transfer_proof_path) }}" target="_blank"
-                                class="text-blue-600 hover:text-blue-800 text-sm">
-                                Lihat Bukti Transfer →
-                            </a>
-                        @else
-                            <p class="text-lg text-gray-900">-</p>
-                        @endif
+                        <dt class="text-stone-500">WhatsApp</dt>
+                        <dd class="mt-1 font-semibold text-stone-950">{{ $claim->phone }}</dd>
                     </div>
-                @endif
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Voucher Code</label>
-                    <p class="text-lg font-mono bg-gray-100 px-3 py-1 rounded inline-block">
-                        {{ $claim->initialVoucher->code ?? 'N/A' }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Public Token</label>
-                    <p class="text-sm font-mono bg-gray-100 px-3 py-1 rounded inline-block">{{ $claim->public_token }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">PIC</label>
-                    <p class="text-lg text-gray-900">{{ $claim->initialVoucher->pic->name ?? 'N/A' }}</p>
-                    <p class="text-sm text-gray-500">{{ $claim->initialVoucher->pic->code ?? '' }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Batch</label>
-                    <p class="text-lg text-gray-900">{{ $claim->initialVoucher->batch->name ?? 'N/A' }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Claimed At</label>
-                    <div class="flex items-center space-x-2">
-                        <p class="text-lg text-gray-900">{{ $claim->created_at->format('d M Y H:i:s') }}</p>
-                        @if($claim->updated_at && $claim->updated_at->gt($claim->created_at))
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                                Edited on {{ $claim->updated_at->format('d M Y H:i:s') }}
-                            </span>
-                        @endif
+                    <div>
+                        <dt class="text-stone-500">Instagram</dt>
+                        <dd class="mt-1 font-semibold text-stone-950">{{ $claim->instagram_username ? '@' . ltrim($claim->instagram_username, '@') : '-' }}</dd>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Public Link</label>
-                    <a href="{{ route('public.vouchers', $claim->public_token) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
-                        View Public Page →
-                    </a>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-600">Nominal Penyaluran</label>
-                    <p class="text-lg text-gray-900">
-                        Zakat Fitrah: Rp {{ number_format($claim->zakat_fitrah_amount ?? 0, 0, ',', '.') }},
-                        Zakat Mal: Rp {{ number_format($claim->zakat_mal_amount ?? 0, 0, ',', '.') }},
-                        Infaq: Rp {{ number_format($claim->infaq_amount ?? 0, 0, ',', '.') }},
-                        Sodaqoh: Rp {{ number_format($claim->sodaqoh_amount ?? 0, 0, ',', '.') }}
-                    </p>
-                </div>
-                <div class="md:col-span-2 border-t pt-4 mt-2">
-                    <label class="block text-sm font-medium text-gray-600 mb-2">Status Verifikasi Dana</label>
-                    <div class="flex items-center space-x-4">
-                        @if($claim->verification_status == 'VERIFIED')
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                                    </path>
-                                </svg>
-                                Termasuk dalam setoran terverifikasi
-                            </span>
-                            @if($claim->verified_at)
-                                <span class="text-sm text-gray-500">pada {{ $claim->verified_at->format('d M Y H:i') }}</span>
-                            @endif
-                        @elseif($claim->verification_status == 'ANOMALY')
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                    </path>
-                                </svg>
-                                Anomali: {{ $claim->verification_note }}
-                            </span>
-                        @else
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                Belum Diverifikasi
-                            </span>
-                        @endif
+                    <div>
+                        <dt class="text-stone-500">Tujuan Transfer</dt>
+                        <dd class="mt-1 font-semibold text-stone-950">{{ $claim->transfer_destination ?: '-' }}</dd>
                     </div>
-                </div>
+                    <div>
+                        <dt class="text-stone-500">Bukti Transfer</dt>
+                        <dd class="mt-1 break-all text-stone-700">{{ $claim->transfer_proof_path ?: '-' }}</dd>
+                    </div>
+                </dl>
             </div>
-        </div>
 
-        <!-- Merchant Vouchers -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="p-6 border-b">
-                <h3 class="text-lg font-semibold text-gray-900">Merchant Vouchers ({{ $claim->merchantVouchers->count() }})
-                </h3>
+            <div class="rounded-[1.8rem] bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-stone-950">Edit Data Ringan</h3>
+                <form method="POST" action="{{ route('admin.claims.update', $claim->id) }}" class="mt-5 space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <input type="text" name="name" value="{{ old('name', $claim->name) }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm" placeholder="Nama">
+                    <input type="email" name="email" value="{{ old('email', $claim->email) }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm" placeholder="Email">
+                    <input type="text" name="phone" value="{{ old('phone', $claim->phone) }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm" placeholder="WhatsApp">
+                    <input type="text" name="instagram_username" value="{{ old('instagram_username', $claim->instagram_username) }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm" placeholder="Instagram">
+                    <select name="payment_method" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm">
+                        <option value="cash" {{ old('payment_method', $claim->payment_method) === 'cash' ? 'selected' : '' }}>Cash</option>
+                        <option value="transfer" {{ old('payment_method', $claim->payment_method) === 'transfer' ? 'selected' : '' }}>Transfer</option>
+                    </select>
+                    <input type="text" name="transfer_destination" value="{{ old('transfer_destination', $claim->transfer_destination) }}" class="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm" placeholder="Tujuan transfer">
+                    <button type="submit" class="rounded-full bg-emerald-800 px-5 py-3 text-sm font-semibold text-amber-100">Simpan Perubahan</button>
+                </form>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merchant</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voucher Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Offer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Redeemed At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($claim->merchantVouchers as $voucher)
-                            <tr>
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ $voucher->merchant->name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4">
-                                    <code class="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{{ $voucher->code }}</code>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    {{ $voucher->merchant->offer->title ?? 'No offer' }}
-                                    <span
-                                        class="text-gray-500">({{ $voucher->merchant->offer->formatted_discount ?? '' }})</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($voucher->status === 'REDEEMED')
-                                        <span
-                                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                            Redeemed
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            Active
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    {{ $voucher->redeemed_at ? $voucher->redeemed_at->format('d M Y H:i') : '-' }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">No merchant vouchers</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+            <div class="rounded-[1.8rem] border border-red-200 bg-white p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-stone-950">Hapus Data</h3>
+                <p class="mt-3 text-sm leading-7 text-stone-600">Gunakan hanya jika data kontribusi ini memang harus dipensiunkan dari dashboard.</p>
+                <form method="POST" action="{{ route('admin.claims.destroy', $claim->id) }}" class="mt-4" onsubmit="return confirm('Hapus data kontribusi ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="rounded-full bg-red-600 px-5 py-3 text-sm font-semibold text-white">Hapus Kontribusi</button>
+                </form>
             </div>
         </div>
-    </div>
+    </section>
+</div>
 @endsection

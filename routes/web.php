@@ -1,20 +1,31 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Admin\PicController;
-use App\Http\Controllers\Admin\MerchantController;
-use App\Http\Controllers\Admin\OfferController;
-use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\CommunityController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\InitialVoucherController;
 use App\Http\Controllers\Admin\InitialVoucherAssignController;
 use App\Http\Controllers\Admin\InitialVoucherPrintController;
 use App\Http\Controllers\Admin\ClaimDataController;
-use App\Http\Controllers\Admin\RedeemDataController;
+use App\Http\Controllers\Admin\QurbanSettingController;
+use App\Http\Controllers\LegacyFlowController;
 
 // Landing Page
 Route::get('/', function () {
-    return view('landing');
+    $pricePerSheep  = 2_500_000;
+    $totalSheep     = 21;
+    $targetAmount   = $pricePerSheep * $totalSheep; // 52_500_000
+
+    $totalCollected = (float) \App\Models\Claim::where('verification_status', 'VERIFIED')
+        ->whereIn('category_type', ['DOMBA', 'PATUNGAN'])
+        ->sum('contribution_amount');
+
+    $progressPct  = (int) min(100, round($totalCollected / $targetAmount * 100));
+    $sheepCurrent = (int) min($totalSheep, floor($totalCollected / $pricePerSheep));
+
+    return view('landing', compact('progressPct', 'sheepCurrent', 'totalSheep', 'totalCollected'));
 })->name('landing');
 
 // Authentication Routes
@@ -26,26 +37,47 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Financial Report
+    Route::get('/financial-report', [FinancialReportController::class, 'index'])->name('financial-report');
+
     // PICs CRUD
     Route::resource('pics', PicController::class);
 
-    // Merchants CRUD
-    Route::resource('merchants', MerchantController::class);
+    // Communities
+    Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
+    Route::get('/communities/{id}', [CommunityController::class, 'show'])->name('communities.show');
 
-    // Offers CRUD
-    Route::resource('offers', OfferController::class);
+    // Legacy merchant tools kept as retired routes for compatibility
+    Route::prefix('merchants')->name('merchants.')->group(function () {
+        Route::get('/', [LegacyFlowController::class, 'adminMerchantTools'])->name('index');
+        Route::get('/create', [LegacyFlowController::class, 'adminMerchantTools'])->name('create');
+        Route::post('/', [LegacyFlowController::class, 'adminMerchantTools'])->name('store');
+        Route::get('/{merchant}/edit', [LegacyFlowController::class, 'adminMerchantTools'])->name('edit');
+        Route::match(['put', 'patch'], '/{merchant}', [LegacyFlowController::class, 'adminMerchantTools'])->name('update');
+        Route::delete('/{merchant}', [LegacyFlowController::class, 'adminMerchantTools'])->name('destroy');
+    });
+
+    Route::prefix('offers')->name('offers.')->group(function () {
+        Route::get('/', [LegacyFlowController::class, 'adminMerchantTools'])->name('index');
+        Route::get('/create', [LegacyFlowController::class, 'adminMerchantTools'])->name('create');
+        Route::post('/', [LegacyFlowController::class, 'adminMerchantTools'])->name('store');
+        Route::get('/{offer}/edit', [LegacyFlowController::class, 'adminMerchantTools'])->name('edit');
+        Route::match(['put', 'patch'], '/{offer}', [LegacyFlowController::class, 'adminMerchantTools'])->name('update');
+        Route::delete('/{offer}', [LegacyFlowController::class, 'adminMerchantTools'])->name('destroy');
+    });
 
     // Analytics
-    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/analytics', [LegacyFlowController::class, 'adminAnalytics'])->name('analytics');
 
     // Data Views
     Route::get('/claims', [ClaimDataController::class, 'index'])->name('claims.index');
     Route::post('/claims', [ClaimDataController::class, 'store'])->name('claims.store');
     Route::put('/claims/{id}', [ClaimDataController::class, 'update'])->name('claims.update');
     Route::get('/claims/{id}', [ClaimDataController::class, 'show'])->name('claims.show');
+    Route::get('/claims/{id}/certificate', [ClaimDataController::class, 'downloadCertificate'])->name('claims.certificate');
     Route::delete('/claims/{id}', [ClaimDataController::class, 'destroy'])->name('claims.destroy');
-    Route::get('/redeems', [RedeemDataController::class, 'index'])->name('redeems.index');
-    Route::get('/redeems/{id}', [RedeemDataController::class, 'show'])->name('redeems.show');
+    Route::get('/redeems', [LegacyFlowController::class, 'adminRedeems'])->name('redeems.index');
+    Route::get('/redeems/{id}', [LegacyFlowController::class, 'adminRedeems'])->name('redeems.show');
 
     // Exports
     Route::prefix('exports')->name('exports.')->group(function () {
@@ -53,6 +85,11 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
         Route::get('/claims', [ExportController::class, 'claims'])->name('claims');
         Route::get('/redeems', [ExportController::class, 'redeems'])->name('redeems');
         Route::get('/vouchers', [ExportController::class, 'vouchers'])->name('vouchers');
+    });
+
+    Route::prefix('settings/qurban')->name('settings.qurban.')->group(function () {
+        Route::get('/', [QurbanSettingController::class, 'edit'])->name('edit');
+        Route::put('/', [QurbanSettingController::class, 'update'])->name('update');
     });
 
     // Voucher Management
@@ -78,25 +115,17 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
 });
 
 // Merchant Routes - Protected by auth and role:MERCHANT middleware
-use App\Http\Controllers\Merchant\DashboardController as MerchantDashboardController;
-use App\Http\Controllers\Merchant\ScanController;
-use App\Http\Controllers\Merchant\RedemptionController;
-use App\Http\Controllers\Merchant\AnalyticsController as MerchantAnalyticsController;
-
 Route::middleware(['auth', 'role:MERCHANT'])->prefix('merchant')->name('merchant.')->group(function () {
-    Route::get('/', [MerchantDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/scan', [ScanController::class, 'index'])->name('scan');
+    Route::get('/', [LegacyFlowController::class, 'merchantPortal'])->name('dashboard');
+    Route::get('/scan', [LegacyFlowController::class, 'merchantPortal'])->name('scan');
 
-    // Rate limited endpoints for validation and redemption
-    Route::post('/scan/validate', [ScanController::class, 'validateVoucher'])
-        ->middleware('throttle:30,1') // 30 requests per minute
+    Route::post('/scan/validate', [LegacyFlowController::class, 'merchantApi'])
         ->name('scan.validate');
-    Route::post('/scan/redeem', [ScanController::class, 'redeem'])
-        ->middleware('throttle:20,1') // 20 requests per minute
+    Route::post('/scan/redeem', [LegacyFlowController::class, 'merchantApi'])
         ->name('scan.redeem');
 
-    Route::get('/redemptions', [RedemptionController::class, 'index'])->name('redemptions');
-    Route::get('/analytics', [MerchantAnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/redemptions', [LegacyFlowController::class, 'merchantPortal'])->name('redemptions');
+    Route::get('/analytics', [LegacyFlowController::class, 'merchantPortal'])->name('analytics');
 });
 
 // PIC Routes - Protected by auth and role:PIC middleware
@@ -104,19 +133,26 @@ use App\Http\Controllers\Pic\DashboardController as PicDashboardController;
 
 Route::middleware(['auth', 'role:PIC'])->prefix('pic')->name('pic.')->group(function () {
     Route::get('/', [PicDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/vouchers/export', [PicDashboardController::class, 'exportVouchers'])->name('vouchers.export');
     Route::get('/data/export', [PicDashboardController::class, 'exportData'])->name('data.export');
+    Route::get('/vouchers/export-pdf', [PicDashboardController::class, 'exportVouchersPdf'])->name('vouchers.export-pdf');
+    Route::get('/claims/{id}/certificate', [PicDashboardController::class, 'downloadCertificate'])->name('claims.certificate');
 });
 
 // Public Routes - No authentication required
 use App\Http\Controllers\Public\ClaimController;
 use App\Http\Controllers\Public\VoucherListController;
 
+Route::get('/kurban', [ClaimController::class, 'direct'])->name('public.contribute');
+Route::post('/kurban', [ClaimController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('public.contribute.store');
 Route::get('/claim/{code}', [ClaimController::class, 'show'])->name('public.claim');
 Route::get('/claim-closed', [ClaimController::class, 'closed'])->name('public.claim-closed');
 Route::post('/claim', [ClaimController::class, 'store'])
     ->middleware('throttle:10,1') // 10 requests per minute
     ->name('public.claim.store');
+Route::get('/sertifikat/{token}', [VoucherListController::class, 'show'])->name('public.certificate');
+Route::get('/sertifikat/{token}/download', [ClaimController::class, 'downloadCertificate'])->name('public.certificate.download');
 Route::get('/v/{token}', [VoucherListController::class, 'show'])->name('public.vouchers');
 
 // Debug route - REMOVE AFTER FIX
