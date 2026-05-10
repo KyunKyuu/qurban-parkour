@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PARQOUR — Patungan Riungan Qurban</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/figma/mlup.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,10 +79,11 @@ details > summary { list-style: none; cursor: pointer; }
                 Berkurban Sekarang
             </a>
             <a href="{{ route('login') }}" title="Login Admin / PIC"
-               class="btn tr flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-500 hover:border-[#1b4332] hover:text-[#1b4332]">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 9A3.75 3.75 0 1 1 8.25 9a3.75 3.75 0 0 1 7.5 0ZM4.5 19.5a8.25 8.25 0 0 1 15 0"/>
+               class="btn tr flex items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-500 hover:border-[#1b4332] hover:text-[#1b4332]">
+                <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
                 </svg>
+                <span>Masuk</span>
             </a>
         </div>
     </div>
