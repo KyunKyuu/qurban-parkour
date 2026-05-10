@@ -29,11 +29,9 @@
     </div>
     @endif
 
-    <form method="POST" action="{{ route($usesVoucher ? 'public.claim.store' : 'public.contribute.store') }}" enctype="multipart/form-data" class="space-y-5">
+    <form method="POST" action="{{ route('public.claim.store') }}" enctype="multipart/form-data" class="space-y-5">
         @csrf
-        @if($code)
         <input type="hidden" name="code" value="{{ $code }}">
-        @endif
 
         {{-- ── Data Diri ── --}}
         <div class="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
@@ -176,14 +174,19 @@
             </div>
         </div>
 
-        {{-- ── Info PIC ── --}}
-        @if($code)
+        {{-- ── Info Voucher & Komunitas ── --}}
         <div class="rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
             <p class="text-xs font-semibold uppercase tracking-[0.24em] text-stone-400">Kode Kontribusi</p>
             <p class="mt-2 font-mono text-lg font-semibold text-stone-900">{{ $code }}</p>
-            <p class="mt-1 text-xs text-stone-500">Terhubung ke PIC: {{ $defaultPicLabel }}</p>
+            @if($communityLabel)
+                <p class="mt-1.5 text-sm text-stone-600">
+                    Komunitas: <span class="font-semibold text-stone-800">{{ $communityLabel }}</span>
+                </p>
+            @endif
+            <p class="mt-0.5 text-sm text-stone-500">
+                PIC: <span class="font-medium text-stone-700">{{ $picLabel }}</span>
+            </p>
         </div>
-        @endif
 
         {{-- ── Submit ── --}}
         <button type="submit"

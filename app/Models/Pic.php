@@ -17,15 +17,23 @@ class Pic extends Model
         'email',
         'password',
         'is_active',
+        'pic_type',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
 
-    /**
-     * Get the initial vouchers assigned to this PIC.
-     */
+    public function isKasie(): bool
+    {
+        return $this->pic_type !== 'komunitas';
+    }
+
+    public function isKomunitas(): bool
+    {
+        return $this->pic_type === 'komunitas';
+    }
+
     public function initialVouchers(): HasMany
     {
         return $this->hasMany(InitialVoucher::class, 'assigned_pic_id');
@@ -36,9 +44,16 @@ class Pic extends Model
         return $this->hasMany(Claim::class);
     }
 
+    /** Communities owned by this PIC Kasie (pic_id FK) */
     public function communities(): HasMany
     {
-        return $this->hasMany(Community::class);
+        return $this->hasMany(Community::class, 'pic_id');
+    }
+
+    /** The single community this PIC Komunitas manages (pic_komunitas_id FK) */
+    public function communityAsPicKomunitas(): HasOne
+    {
+        return $this->hasOne(Community::class, 'pic_komunitas_id');
     }
 
     public function user(): HasOne

@@ -134,7 +134,9 @@ use App\Http\Controllers\Pic\DashboardController as PicDashboardController;
 Route::middleware(['auth', 'role:PIC'])->prefix('pic')->name('pic.')->group(function () {
     Route::get('/', [PicDashboardController::class, 'index'])->name('dashboard');
     Route::get('/data/export', [PicDashboardController::class, 'exportData'])->name('data.export');
+    Route::get('/data/export-excel', [PicDashboardController::class, 'exportExcel'])->name('data.export-excel');
     Route::get('/vouchers/export-pdf', [PicDashboardController::class, 'exportVouchersPdf'])->name('vouchers.export-pdf');
+    Route::get('/vouchers/export-pdf-komunitas', [PicDashboardController::class, 'exportVouchersPdfKomunitas'])->name('vouchers.export-pdf-komunitas');
     Route::get('/claims/{id}/certificate', [PicDashboardController::class, 'downloadCertificate'])->name('claims.certificate');
 });
 
@@ -142,10 +144,8 @@ Route::middleware(['auth', 'role:PIC'])->prefix('pic')->name('pic.')->group(func
 use App\Http\Controllers\Public\ClaimController;
 use App\Http\Controllers\Public\VoucherListController;
 
-Route::get('/kurban', [ClaimController::class, 'direct'])->name('public.contribute');
-Route::post('/kurban', [ClaimController::class, 'store'])
-    ->middleware('throttle:10,1')
-    ->name('public.contribute.store');
+// Direct contribution disabled — must use voucher QR code
+Route::get('/kurban', fn () => redirect()->route('public.claim-closed'))->name('public.contribute');
 Route::get('/claim/{code}', [ClaimController::class, 'show'])->name('public.claim');
 Route::get('/claim-closed', [ClaimController::class, 'closed'])->name('public.claim-closed');
 Route::post('/claim', [ClaimController::class, 'store'])

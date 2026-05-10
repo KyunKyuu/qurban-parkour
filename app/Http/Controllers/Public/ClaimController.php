@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\InitialVoucher;
 use App\Services\ClaimService;
 use App\Services\QurbanPricingService;
 use Carbon\Carbon;
@@ -15,15 +16,6 @@ class ClaimController extends Controller
         protected ClaimService $claimService,
         protected QurbanPricingService $pricingService
     ) {
-    }
-
-    public function direct()
-    {
-        if ($this->isContributionClosed()) {
-            return redirect()->route('public.claim-closed');
-        }
-
-        return view('public.claim', $this->viewPayload());
     }
 
     public function show(string $code)
@@ -71,7 +63,7 @@ class ClaimController extends Controller
             $claim = $this->claimService->processClaim([
                 ...$validated,
                 'transfer_proof_path' => $transferProofPath,
-            ], $validated['code'] ?? null);
+            ], $validated['code']);
 
             return redirect()->route('public.certificate', ['token' => $claim->public_token]);
         } catch (ValidationException $e) {
@@ -105,8 +97,7 @@ class ClaimController extends Controller
         $patunganTargets = implode(',', $this->pricingService->patunganTargets());
 
         return [
-            'code' => 'nullable|string',
-            'pic_id' => 'nullable|exists:pics,id',
+            'code'   => 'required|string',
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:100',
             'phone' => 'required|string|max:30',
@@ -120,21 +111,21 @@ class ClaimController extends Controller
         ];
     }
 
-    protected function viewPayload($voucher = null, ?string $code = null): array
+    protected function viewPayload(InitialVoucher $voucher, string $code): array
     {
         $categories = $this->pricingService->options();
 
         return [
-            'voucher' => $voucher,
-            'code' => $code,
-            'usesVoucher' => (bool) $voucher,
-            'categoryOptions' => $categories,
-            'patunganTargets' => array_values(array_filter($categories, fn (array $category) => in_array($category['key'], $this->pricingService->patunganTargets(), true))),
-            'defaultPicLabel' => $voucher?->pic?->name ?? config('qurban.default_pic_label'),
+            'voucher'          => $voucher,
+            'code'             => $code,
+            'categoryOptions'  => $categories,
+            'patunganTargets'  => array_values(array_filter($categories, fn (array $category) => in_array($category['key'], $this->pricingService->patunganTargets(), true))),
+            'picLabel'         => $voucher->pic?->name ?? config('qurban.default_pic_label'),
+            'communityLabel'   => $voucher->community?->name,
             'bankAccountLabel' => config('qurban.bank_account_label'),
-            'campaignName' => config('qurban.campaign_name'),
+            'campaignName'     => config('qurban.campaign_name'),
             'campaignSubtitle' => config('qurban.campaign_subtitle'),
-            'closingLabel' => config('qurban.closing_label'),
+            'closingLabel'     => config('qurban.closing_label'),
         ];
     }
 

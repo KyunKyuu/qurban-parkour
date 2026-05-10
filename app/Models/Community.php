@@ -11,6 +11,7 @@ class Community extends Model
 {
     protected $fillable = [
         'pic_id',
+        'pic_komunitas_id',
         'name',
         'code',
         'is_active',
@@ -20,9 +21,16 @@ class Community extends Model
         'is_active' => 'boolean',
     ];
 
+    /** PIC Kasie that owns this community */
     public function pic(): BelongsTo
     {
-        return $this->belongsTo(Pic::class);
+        return $this->belongsTo(Pic::class, 'pic_id');
+    }
+
+    /** PIC Komunitas directly managing this community */
+    public function picKomunitas(): BelongsTo
+    {
+        return $this->belongsTo(Pic::class, 'pic_komunitas_id');
     }
 
     public function initialVouchers(): HasMany

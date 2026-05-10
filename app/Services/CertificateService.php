@@ -12,7 +12,7 @@ class CertificateService
     private string $fontBold;
 
     // Proportional Y-center of the white box (tweak if text is off)
-    private const BOX_CENTER_Y = 0.460;
+    private const BOX_CENTER_Y = 0.425;
     // Maximum text width relative to image width
     private const BOX_MAX_W    = 0.80;
 
