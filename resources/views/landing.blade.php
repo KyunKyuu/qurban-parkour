@@ -653,7 +653,8 @@ $clipInsetTop = 100 - $progressPct;
             </div>
         </div>
     </div>
-    <div class="mt-6 overflow-hidden select-none">
+    <p class="mt-5 text-center text-[11px] text-white/20">Created by Teguh Iqbal</p>
+    <div class="mt-3 overflow-hidden select-none">
         <p class="display-font text-center font-bold leading-none tracking-tight text-white/5" style="font-size: clamp(4rem, 14vw, 12rem);">
             PARQOUR
         </p>
