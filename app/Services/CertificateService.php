@@ -12,9 +12,9 @@ class CertificateService
     private string $fontBold;
 
     // Proportional Y-center of the white box (tweak if text is off)
-    private const BOX_CENTER_Y = 0.485;
+    private const BOX_CENTER_Y = 0.460;
     // Maximum text width relative to image width
-    private const BOX_MAX_W    = 0.82;
+    private const BOX_MAX_W    = 0.80;
 
     public function __construct()
     {
@@ -80,8 +80,8 @@ class CertificateService
 
         if ($hasIg) {
             $ig     = '@' . ltrim($claim->instagram_username, '@');
-            $nameCY = (int) ($boxCY - $h * 0.028);
-            $igCY   = (int) ($boxCY + $h * 0.038);
+            $nameCY = (int) ($boxCY - $h * 0.022);
+            $igCY   = (int) ($boxCY + $h * 0.018);
             $this->textCenterWrap($img, $fB, 68, $boxCX, $nameCY, $boxMaxW, $black, $claim->name);
             $this->textCenter($img, $fR, 36, $boxCX, $igCY, $darkGray, $ig);
         } else {
