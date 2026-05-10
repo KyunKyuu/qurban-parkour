@@ -665,24 +665,26 @@ $clipInsetTop = 100 - $progressPct;
 <audio id="bg-audio" src="{{ asset('images/arab.mp3') }}" loop preload="none"></audio>
 
 <div id="audio-player" class="fixed bottom-6 right-6 z-50">
-    <div class="flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white/92 px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.14)]" style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+    <div class="flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white/92 shadow-[0_8px_32px_rgba(0,0,0,0.14)]
+                p-2 md:px-3 md:py-2.5"
+         style="backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
 
-        {{-- Kepala sapi --}}
-        <div class="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl" style="background: #0f2d1e;">
+        {{-- Kepala sapi — desktop only --}}
+        <div class="relative hidden md:block h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl" style="background: #0f2d1e;">
             <img src="{{ asset('images/sapi-face.png') }}" alt=""
                  class="absolute inset-0 h-full w-full object-cover"
                  style="mix-blend-mode: screen; object-position: center top;">
         </div>
 
-        {{-- Label --}}
-        <div class="min-w-0">
+        {{-- Label — desktop only --}}
+        <div class="hidden md:block min-w-0">
             <p class="text-xs font-bold leading-none text-stone-800">Ayo Dong</p>
             <p id="audio-status" class="mt-1 text-[10px] leading-none text-stone-400">Klik untuk putar</p>
         </div>
 
         {{-- Play / Pause button --}}
         <button id="audio-toggle" onclick="toggleAudio()"
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1b4332] text-amber-100 shadow-[0_4px_14px_rgba(27,67,50,0.32)] transition hover:bg-[#0f2d1e] hover:scale-105 active:scale-95"
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl md:rounded-full bg-[#1b4332] text-amber-100 shadow-[0_4px_14px_rgba(27,67,50,0.32)] transition hover:bg-[#0f2d1e] hover:scale-105 active:scale-95"
             aria-label="Putar musik">
             <svg id="icon-play" class="ml-0.5 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
