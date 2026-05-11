@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
     Route::get('/analytics', [LegacyFlowController::class, 'adminAnalytics'])->name('analytics');
 
     // Data Views
+    Route::get('/transactions', [ClaimDataController::class, 'transactions'])->name('transactions.index');
     Route::get('/claims', [ClaimDataController::class, 'index'])->name('claims.index');
     Route::post('/claims', [ClaimDataController::class, 'store'])->name('claims.store');
     Route::put('/claims/{id}', [ClaimDataController::class, 'update'])->name('claims.update');

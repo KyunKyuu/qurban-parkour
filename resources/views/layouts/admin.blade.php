@@ -54,6 +54,10 @@
                         <span class="text-xs font-bold uppercase tracking-[0.2em]">LK</span>
                         <span class="font-medium">Laporan Keuangan</span>
                     </a>
+                    <a href="{{ route('admin.transactions.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.transactions.*') ? 'bg-orange-400 text-white' : 'hover:bg-white/5 text-emerald-100' }}">
+                        <span class="text-xs font-bold uppercase tracking-[0.2em]">TR</span>
+                        <span class="font-medium">Transaksi</span>
+                    </a>
                     <a href="{{ route('admin.claims.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.claims.*') ? 'bg-orange-400 text-white' : 'hover:bg-white/5 text-emerald-100' }}">
                         <span class="text-xs font-bold uppercase tracking-[0.2em]">KT</span>
                         <span class="font-medium">Kontribusi & Sertifikat</span>

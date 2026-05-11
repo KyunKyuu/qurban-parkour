@@ -94,7 +94,6 @@ class ClaimController extends Controller
     protected function validationRules(): array
     {
         $categoryKeys = implode(',', array_keys($this->pricingService->categories()));
-        $patunganTargets = implode(',', $this->pricingService->patunganTargets());
 
         return [
             'code'   => 'required|string',
@@ -103,7 +102,6 @@ class ClaimController extends Controller
             'phone' => 'required|string|max:30',
             'instagram_username' => 'nullable|string|max:100',
             'category_type' => 'required|in:' . $categoryKeys,
-            'patungan_target' => 'nullable|required_if:category_type,PATUNGAN|in:' . $patunganTargets,
             'contribution_amount' => 'nullable|required_if:category_type,PATUNGAN|numeric|min:1000',
             'payment_method' => 'required|in:cash,transfer',
             'transfer_destination' => 'nullable|required_if:payment_method,transfer|string|max:255',
@@ -119,7 +117,6 @@ class ClaimController extends Controller
             'voucher'          => $voucher,
             'code'             => $code,
             'categoryOptions'  => $categories,
-            'patunganTargets'  => array_values(array_filter($categories, fn (array $category) => in_array($category['key'], $this->pricingService->patunganTargets(), true))),
             'picLabel'         => $voucher->pic?->name ?? config('qurban.default_pic_label'),
             'communityLabel'   => $voucher->community?->name,
             'bankAccountLabel' => config('qurban.bank_account_label'),

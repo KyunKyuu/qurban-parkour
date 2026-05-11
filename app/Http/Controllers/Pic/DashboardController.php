@@ -255,18 +255,14 @@ class DashboardController extends Controller
         if ($communityId) {
             return Claim::query()
                 ->with(['initialVoucher', 'pic'])
-                ->whereHas('initialVoucher', function ($q) use ($pic, $communityId) {
-                    $q->where('assigned_pic_id', $pic->id)
-                      ->where('community_id', $communityId);
-                });
+                ->whereHas('initialVoucher', fn ($q) => $q->where('community_id', $communityId));
         }
+
+        $communityIds = $pic->communities()->pluck('id');
 
         return Claim::query()
             ->with(['initialVoucher', 'pic'])
-            ->where(function ($q) use ($pic) {
-                $q->where('pic_id', $pic->id)
-                  ->orWhereHas('initialVoucher', fn ($vq) => $vq->where('assigned_pic_id', $pic->id));
-            });
+            ->whereHas('initialVoucher', fn ($q) => $q->whereIn('community_id', $communityIds));
     }
 
     protected function claimsQueryKomunitas(Community $community)

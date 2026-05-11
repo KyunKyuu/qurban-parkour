@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Claim;
+use App\Models\InitialVoucher;
 use App\Models\Pic;
 use App\Services\CertificateService;
 use App\Services\ClaimService;
 use App\Services\QurbanPricingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ClaimDataController extends Controller
@@ -103,12 +105,59 @@ class ClaimDataController extends Controller
         return redirect()->route('admin.claims.show', $claim->id)->with('success', 'Data kontribusi diperbarui.');
     }
 
+    public function transactions(Request $request)
+    {
+        $query = Claim::with(['initialVoucher.community', 'initialVoucher.pic'])
+            ->latest();
+
+        if ($request->filled('category_type')) {
+            $query->where('category_type', $request->category_type);
+        }
+
+        if ($request->verification_status === 'verified') {
+            $query->whereNotNull('verified_at');
+        } elseif ($request->verification_status === 'unverified') {
+            $query->whereNull('verified_at');
+        }
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn ($q) => $q
+                ->where('name', 'like', "%{$s}%")
+                ->orWhere('email', 'like', "%{$s}%")
+                ->orWhereHas('initialVoucher', fn ($v) => $v->where('code', 'like', "%{$s}%"))
+            );
+        }
+
+        $claims     = $query->paginate(25)->withQueryString();
+        $categories = $this->pricingService->options();
+
+        return view('admin.transactions.index', compact('claims', 'categories'));
+    }
+
     public function destroy($id)
     {
         $claim = Claim::findOrFail($id);
+
+        // Reset voucher status so it can be claimed again
+        if ($claim->initial_voucher_id) {
+            InitialVoucher::where('id', $claim->initial_voucher_id)
+                ->update(['status' => 'ASSIGNED']);
+        }
+
+        // Remove certificate file
+        if ($claim->certificate_path) {
+            Storage::disk('public')->delete($claim->certificate_path);
+        }
+
         $claim->delete();
 
-        return redirect()->route('admin.claims.index')->with('success', 'Data kontribusi berhasil dihapus.');
+        $redirect = request()->input('redirect', 'admin.claims.index');
+        $route    = in_array($redirect, ['admin.transactions.index', 'admin.claims.index'])
+            ? $redirect
+            : 'admin.claims.index';
+
+        return redirect()->route($route)->with('success', 'Transaksi berhasil dihapus dan voucher direset.');
     }
 
     public function downloadCertificate($id)
