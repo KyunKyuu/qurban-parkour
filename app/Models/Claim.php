@@ -79,11 +79,12 @@ class Claim extends Model
 
     public function getPatunganProgressPercentAttribute(): int
     {
-        if ($this->category_type !== 'PATUNGAN' || !$this->unit_price_snapshot) {
+        $snapshot = (float) $this->unit_price_snapshot;
+        if ($this->category_type !== 'PATUNGAN' || $snapshot <= 0) {
             return 100;
         }
 
-        return min(100, (int) round(($this->total_donation_amount / (float) $this->unit_price_snapshot) * 100));
+        return min(100, (int) round(($this->total_donation_amount / $snapshot) * 100));
     }
 
     public function getCertificateFilenameAttribute(): string
