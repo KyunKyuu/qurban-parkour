@@ -69,24 +69,14 @@ class QurbanPricingService
             ]);
         }
 
-        $allowedTargets = $this->patunganTargets();
-        if (!$patunganTarget || !in_array($patunganTarget, $allowedTargets, true)) {
-            throw ValidationException::withMessages([
-                'patungan_target' => 'Target patungan harus dipilih antara domba atau sapi.',
-            ]);
-        }
-
-        $targetCategory = $this->getCategory($patunganTarget);
-        $targetPrice = (float) $targetCategory['price'];
-        $progress = $targetPrice > 0 ? min(100, (int) round(($customAmount / $targetPrice) * 100)) : 0;
         return [
             'category_type' => $categoryType,
             'category_label' => $category['label'],
-            'unit_price_snapshot' => $targetPrice,
+            'unit_price_snapshot' => 0,
             'contribution_amount' => $customAmount,
-            'patungan_target' => $patunganTarget,
-            'subsidy_amount' => max(0, $targetPrice - $customAmount),
-            'progress_percent' => $progress,
+            'patungan_target' => null,
+            'subsidy_amount' => 0,
+            'progress_percent' => 0,
         ];
     }
 

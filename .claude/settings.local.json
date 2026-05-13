@@ -14,7 +14,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\resources\\\\views\\\\pic\" -File -Recurse)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(php -m)",
-      "Bash(php -r \"echo QR_encode\\('test', 0, 'L'\\);\")"
+      "Bash(php -r \"echo QR_encode\\('test', 0, 'L'\\);\")",
+      "Bash(find C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\app -type f -name \"*.php\" | xargs grep -l \"patungan_target\" 2>nul)"
     ]
   }
 }
