@@ -12,7 +12,7 @@
                 <h2 class="display-font mt-3 text-4xl leading-tight">Sertifikat apresiasi Anda sudah siap diunduh.</h2>
                 <p class="mt-4 max-w-xl text-sm leading-7 text-amber-50/80">
                     Terima kasih, {{ $claim->name }}. Sistem telah mencatat kontribusi Anda pada program
-                    {{ $settingsAudit['current']['campaign_name'] }}
+                   PARQOUR 1447
                     dan menghasilkan kartu penghargaan digital yang bisa diunduh kapan saja.
                 </p>
                 <div class="mt-6 flex flex-wrap gap-3">
