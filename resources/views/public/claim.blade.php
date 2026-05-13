@@ -102,11 +102,16 @@
                     <div class="hidden peer-checked:block mt-2 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5">
                         <p class="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Detail Patungan</p>
                         <div>
-                            <label for="contribution_amount" class="mb-1.5 block text-sm font-semibold text-stone-700">Nominal Kontribusi <span class="text-red-500">*</span></label>
-                            <input id="contribution_amount" name="contribution_amount" type="number" min="1000" step="1000"
-                                value="{{ old('contribution_amount') }}"
-                                class="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm transition focus:border-[#1b4332] focus:outline-none focus:ring-2 focus:ring-[#1b4332]/10"
-                                placeholder="Contoh: 500000">
+                            <label for="contribution_amount_display" class="mb-1.5 block text-sm font-semibold text-stone-700">Nominal Kontribusi <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-sm text-stone-400">Rp</span>
+                                <input id="contribution_amount_display" type="text" inputmode="numeric"
+                                    value="{{ old('contribution_amount') ? 'Rp ' . number_format(old('contribution_amount'), 0, ',', '.') : '' }}"
+                                    class="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-4 text-sm transition focus:border-[#1b4332] focus:outline-none focus:ring-2 focus:ring-[#1b4332]/10"
+                                    placeholder="0">
+                                <input id="contribution_amount" name="contribution_amount" type="hidden"
+                                    value="{{ old('contribution_amount') }}">
+                            </div>
                         </div>
                         <p class="mt-3 text-xs leading-relaxed text-amber-700/80">Nominal bebas seikhlasnya. Admin akan mengelola alokasi ke hewan kurban.</p>
                     </div>
@@ -235,6 +240,24 @@
             label.classList.add('font-semibold', 'text-[#1b4332]');
         }
     };
+
+    const displayInput = document.getElementById('contribution_amount_display');
+    const hiddenInput = document.getElementById('contribution_amount');
+
+    if (displayInput && hiddenInput) {
+        displayInput.addEventListener('input', function () {
+            const raw = this.value.replace(/\D/g, '');
+            hiddenInput.value = raw;
+            this.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+        });
+
+        displayInput.addEventListener('blur', function () {
+            const raw = hiddenInput.value;
+            if (raw) {
+                this.value = raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+        });
+    }
 })();
 </script>
 @endsection
