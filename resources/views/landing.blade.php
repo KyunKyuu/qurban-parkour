@@ -538,7 +538,7 @@ $clipInsetTop = 100 - $progressPct;
         $faqs = [
             [
                 'q' => 'Apakah qurban patungan sah secara syar\'i?',
-                'a' => 'Iya — untuk domba/kambing sah 1 orang 1 ekor. Untuk sapi, satu ekor bisa untuk 7 orang. Kami menerima dan menyalurkan dalam kondisi satu hewan untuk satu kambing.',
+                'a' => 'Secara syari’at, 1 domba sah untuk 1 orang, 1 sapi sah untuk 7 orang. Tanpa mengurangi esensi dan dalam rangka berlomba dalam amal shalih, MLUP mengadakan program dengan akad Shadaqah sebagai media pengorbanan kita yang belum mampu membeli 1 ekor hewan secara utuh.',
             ],
             [
                 'q' => 'Berapa minimal donasi?',
