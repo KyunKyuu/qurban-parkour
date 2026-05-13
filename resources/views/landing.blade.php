@@ -132,7 +132,7 @@ details > summary { list-style: none; cursor: pointer; }
         </p>
 
         <p class="mt-5 max-w-sm text-base leading-relaxed text-stone-500">
-            Apapun nominalnya, pengorbananmu nyata.
+            Berapapun nominalnya, pengorbananmu nyata.
         </p>
 
         <div class="mt-6 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl border border-stone-200 bg-white px-5 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
@@ -173,7 +173,7 @@ details > summary { list-style: none; cursor: pointer; }
             id="quote-fill-text"
             class="display-font text-4xl leading-[1.5] md:text-6xl"
             style="background: linear-gradient(to bottom, #1c1917 var(--q, 0%), #d6d3d1 var(--q, 0%)); -webkit-background-clip: text; background-clip: text; color: transparent;">
-            "Qurban adalah puncak pengorbanan seorang muslim. Tapi tidak semua dari kita diberi keleluasaan untuk menunaikannya sendiri — dan itu bukan halangan."
+            "Qurban adalah puncak pengorbanan seorang muslim. Tapi tidak semua dari kita diberi keleluasaan untuk menunaikannya sendiri, Please, jangan jadiin itu halangan."
         </blockquote>
         <div class="mt-10 h-px w-14 bg-[#c8973a]"></div>
     </div>
@@ -192,10 +192,10 @@ details > summary { list-style: none; cursor: pointer; }
             <div class="fade-up order-1 lg:order-2">
                 <span class="text-xs font-semibold uppercase tracking-[0.28em] text-[#c8973a]">Tentang Program</span>
                 <h2 class="display-font mt-4 text-4xl leading-tight tracking-tight text-stone-950 md:text-5xl">
-                    Ruang bersama<br>untuk berqurban
+                1000 Paket Daging Qurban<br> untuk Mahasiswa yang Membutuhkan
                 </h2>
                 <div class="mt-6 space-y-4 text-base leading-relaxed text-stone-500">
-                    <p>PARQOUR hadir sebagai ruang bersama: berqurban yang bisa kami siapkan, kami kumpulkan, kami ringankan, kami wujudkan dalam bentuk hewan qurban.</p>
+                    <p>PARQOUR hadir sebagai ruang bersama: berapapun yang bisa kamu sisihkan, kita kumpulkan, kita riungkan, kita wujudkan jadi hewan qurban, dan dagingnya kita salurkan ke 1000 mahasiswa yang membutuhkan</p>
                     <p>Bersama 7 komunitas muslimah, kita bergerak jadi satu.</p>
                 </div>
                 <div class="mt-8 flex flex-wrap items-center gap-6">
@@ -247,17 +247,17 @@ details > summary { list-style: none; cursor: pointer; }
             [
                 'num'   => '02',
                 'title' => 'Transfer',
-                'desc'  => 'BCA Digital / iBlu atau langsung via WA. Rekening a.n. Ahmad Bustan D.',
+                'desc'  => 'ke BCA Digital / Blu perwakilan tim Muslim Level Up Academy',
             ],
             [
                 'num'   => '03',
                 'title' => 'Konfirmasi',
-                'desc'  => 'Isi form konfirmasi atau langsung WA 0857-8287-6666.',
+                'desc'  => 'Isi form konfirmasi atau langsung WA 0857-8287-6666',
             ],
             [
                 'num'   => '04',
                 'title' => 'Qurban Tuntas',
-                'desc'  => 'Laporan & dokumentasi dikirim via WA dan IG. 27 Mei 2026.',
+                'desc'  => 'Laporan dan dokumentasi kita update di instagram @muslimlup.ac.id',
             ],
         ];
         @endphp
@@ -542,7 +542,7 @@ $clipInsetTop = 100 - $progressPct;
             ],
             [
                 'q' => 'Berapa minimal donasi?',
-                'a' => 'Tidak ada batas minimal — berapapun yang kamu sisihkan, kami terima dengan senang hati.',
+                'a' => 'Tidak ada batas minimal, berapapun yang bisa kamu sisihkan, kita kumpulkan, kita riungkan, kita wujudkan jadi hewan qurban, dan dagingnya kita salurkan ke 1000 mahasiswa yang membutuhkan',
             ],
             [
                 'q' => 'Bagaimana cara konfirmasi donasi?',
@@ -550,15 +550,11 @@ $clipInsetTop = 100 - $progressPct;
             ],
             [
                 'q' => 'Kapan donasi ditutup?',
-                'a' => 'Donasi ditutup pada 26 Mei 2026 atau sebelum Idul Adha 1447 H.',
+                'a' => 'Donasi tutup pada 30 Mei 2026 atau 13 Dzulhijjah 1447 H. ',
             ],
             [
                 'q' => 'Di mana hewan qurban disalurkan?',
-                'a' => 'Disalurkan pada 27 Mei 2026 — info lokasi akan diumumkan mendekati hari H.',
-            ],
-            [
-                'q' => 'Boleh atas nama orang lain atau yang sudah wafat?',
-                'a' => 'Boleh — tulis di form konfirmasi nama yang hendak kamu niatkan.',
+                'a' => 'Paket 1000 daging Qurban akan disalurkan kepada para mahasiswa yang membutuhkan di Kota Bandung dan sekitarnya.',
             ],
             [
                 'q' => 'Adakah laporan penyaluran?',
