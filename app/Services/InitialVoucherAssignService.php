@@ -21,12 +21,10 @@ class InitialVoucherAssignService
                 throw new \Exception('PIC tidak aktif.');
             }
 
-            if (!$pic->isKomunitas()) {
-                throw new \Exception('Voucher hanya bisa di-assign ke PIC Komunitas.');
-            }
-
-            // Auto-resolve community from PIC Komunitas's linked community
-            $communityId = $pic->communityAsPicKomunitas?->id;
+            // Komunitas: community auto-resolved; Kasie: no community (direct assignment)
+            $communityId = $pic->isKomunitas()
+                ? $pic->communityAsPicKomunitas?->id
+                : null;
 
             $query = InitialVoucher::where('status', 'UNASSIGNED');
 

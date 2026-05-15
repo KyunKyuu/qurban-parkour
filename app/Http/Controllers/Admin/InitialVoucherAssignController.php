@@ -19,8 +19,12 @@ class InitialVoucherAssignController extends Controller
 
     public function create()
     {
-        // Voucher hanya bisa di-assign ke PIC Komunitas
-        $picKomunitas   = Pic::where('is_active', true)
+        $picKasie = Pic::where('is_active', true)
+            ->where('pic_type', '!=', 'komunitas')
+            ->orderBy('name')
+            ->get();
+
+        $picKomunitas = Pic::where('is_active', true)
             ->where('pic_type', 'komunitas')
             ->with('communityAsPicKomunitas')
             ->orderBy('name')
@@ -29,7 +33,7 @@ class InitialVoucherAssignController extends Controller
         $batches        = VoucherBatch::latest()->get();
         $availableCount = $this->assignService->getAvailableCount();
 
-        return view('admin.vouchers.assign', compact('picKomunitas', 'batches', 'availableCount'));
+        return view('admin.vouchers.assign', compact('picKasie', 'picKomunitas', 'batches', 'availableCount'));
     }
 
     public function store(Request $request)
@@ -43,23 +47,23 @@ class InitialVoucherAssignController extends Controller
         try {
             $pic = Pic::with('communityAsPicKomunitas')->findOrFail($validated['pic_id']);
 
-            if (!$pic->isKomunitas()) {
-                return back()->withInput()->with('error', 'Voucher hanya bisa di-assign ke PIC Komunitas.');
-            }
-
             $count = $this->assignService->assign(
                 $validated['pic_id'],
                 $validated['qty'],
                 $validated['batch_id'] ?? null,
             );
 
-            $communityLabel = $pic->communityAsPicKomunitas
-                ? ' (komunitas: ' . $pic->communityAsPicKomunitas->name . ')'
-                : '';
+            if ($pic->isKomunitas()) {
+                $detail = $pic->communityAsPicKomunitas
+                    ? ' (komunitas: ' . $pic->communityAsPicKomunitas->name . ')'
+                    : '';
+            } else {
+                $detail = ' (langsung ke kasie)';
+            }
 
             return redirect()
                 ->route('admin.vouchers.assign')
-                ->with('success', "Berhasil assign {$count} voucher ke {$pic->name}{$communityLabel}");
+                ->with('success', "Berhasil assign {$count} voucher ke {$pic->name}{$detail}");
         } catch (\Exception $e) {
             return back()->withInput()->with('error', 'Gagal assign voucher: ' . $e->getMessage());
         }

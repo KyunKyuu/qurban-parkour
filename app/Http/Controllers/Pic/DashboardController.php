@@ -45,8 +45,13 @@ class DashboardController extends Controller
         $communities       = $pic->communities()->orderBy('name')->get();
         $activeCommunityId = $request->filled('community_id') ? (int) $request->community_id : null;
         $activeCommunity   = $activeCommunityId ? $communities->firstWhere('id', $activeCommunityId) : null;
+        $langsung          = $request->boolean('langsung');
 
-        $baseQuery     = $this->claimsQueryKasie($pic, $activeCommunityId);
+        $hasDirectVouchers = InitialVoucher::where('assigned_pic_id', $pic->id)
+            ->whereNull('community_id')
+            ->exists();
+
+        $baseQuery     = $this->claimsQueryKasie($pic, $activeCommunityId, $langsung);
         $filteredQuery = $this->applyFilters(clone $baseQuery, $request);
 
         $stats         = $this->summarize(clone $filteredQuery);
@@ -57,6 +62,7 @@ class DashboardController extends Controller
         return view('pic.dashboard', compact(
             'pic', 'communities', 'activeCommunityId', 'activeCommunity',
             'stats', 'claims', 'categoryStats', 'pricingOptions',
+            'hasDirectVouchers', 'langsung',
         ));
     }
 
@@ -153,34 +159,46 @@ class DashboardController extends Controller
         $pic = auth()->user()->pic;
         if (!$pic) abort(403);
 
-        $communityId = $request->integer('community_id');
-        $community   = $pic->communities()->findOrFail($communityId);
+        if ($request->boolean('langsung')) {
+            $vouchers = InitialVoucher::where('assigned_pic_id', $pic->id)
+                ->whereNull('community_id')
+                ->orderBy('code')
+                ->get();
 
-        $vouchers = InitialVoucher::where('assigned_pic_id', $pic->id)
-            ->where('community_id', $communityId)
-            ->orderBy('code')
-            ->get();
+            if ($vouchers->isEmpty()) {
+                return back()->with('error', 'Tidak ada voucher langsung yang di-assign ke Anda.');
+            }
 
-        if ($vouchers->isEmpty()) {
-            return back()->with('error', 'Tidak ada voucher untuk komunitas ini.');
+            $filename = 'vouchers-langsung-' . Str::slug($pic->name) . '-' . now()->format('Y-m-d') . '.zip';
+        } else {
+            $communityId = $request->integer('community_id');
+            $community   = $pic->communities()->findOrFail($communityId);
+
+            $vouchers = InitialVoucher::where('community_id', $communityId)
+                ->orderBy('code')
+                ->get();
+
+            if ($vouchers->isEmpty()) {
+                return back()->with('error', 'Tidak ada voucher untuk komunitas ini.');
+            }
+
+            $filename = 'vouchers-' . Str::slug($community->name) . '-' . now()->format('Y-m-d') . '.zip';
         }
 
         $zipPath = tempnam(sys_get_temp_dir(), 'pic_vouchers_') . '.zip';
         $zip     = new ZipArchive();
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
-        foreach ($vouchers as $voucher) {
+        foreach ($vouchers as $i => $voucher) {
             $claimUrl        = rtrim(config('app.url'), '/') . '/claim/' . $voucher->code;
             $voucher->qr_png = $this->generateQrPng($claimUrl);
 
             $pdf = Pdf::loadView('pic.print.single-voucher', ['voucher' => $voucher]);
             $pdf->setPaper('a4', 'landscape');
-            $zip->addFromString('voucher-' . $voucher->code . '.pdf', $pdf->output());
+            $zip->addFromString(($i + 1) . '-' . $voucher->code . '.pdf', $pdf->output());
         }
 
         $zip->close();
-
-        $filename = 'vouchers-' . Str::slug($community->name) . '-' . now()->format('Y-m-d') . '.zip';
 
         return response()->download($zipPath, $filename, ['Content-Type' => 'application/zip'])
             ->deleteFileAfterSend(true);
@@ -206,13 +224,13 @@ class DashboardController extends Controller
         $zip     = new ZipArchive();
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
-        foreach ($vouchers as $voucher) {
+        foreach ($vouchers as $i => $voucher) {
             $claimUrl        = rtrim(config('app.url'), '/') . '/claim/' . $voucher->code;
             $voucher->qr_png = $this->generateQrPng($claimUrl);
 
             $pdf = Pdf::loadView('pic.print.single-voucher', ['voucher' => $voucher]);
             $pdf->setPaper('a4', 'landscape');
-            $zip->addFromString('voucher-' . $voucher->code . '.pdf', $pdf->output());
+            $zip->addFromString(($i + 1) . '-' . $voucher->code . '.pdf', $pdf->output());
         }
 
         $zip->close();
@@ -247,11 +265,21 @@ class DashboardController extends Controller
         }
 
         $communityId = $request->filled('community_id') ? (int) $request->community_id : null;
-        return $this->claimsQueryKasie($pic, $communityId);
+        $langsung    = $request->boolean('langsung');
+        return $this->claimsQueryKasie($pic, $communityId, $langsung);
     }
 
-    protected function claimsQueryKasie(Pic $pic, ?int $communityId = null)
+    protected function claimsQueryKasie(Pic $pic, ?int $communityId = null, bool $langsung = false)
     {
+        if ($langsung) {
+            return Claim::query()
+                ->with(['initialVoucher', 'pic'])
+                ->whereHas('initialVoucher', fn ($q) => $q
+                    ->where('assigned_pic_id', $pic->id)
+                    ->whereNull('community_id')
+                );
+        }
+
         if ($communityId) {
             return Claim::query()
                 ->with(['initialVoucher', 'pic'])
@@ -262,7 +290,13 @@ class DashboardController extends Controller
 
         return Claim::query()
             ->with(['initialVoucher', 'pic'])
-            ->whereHas('initialVoucher', fn ($q) => $q->whereIn('community_id', $communityIds));
+            ->whereHas('initialVoucher', fn ($q) => $q->where(function ($sub) use ($communityIds, $pic) {
+                $sub->whereIn('community_id', $communityIds)
+                    ->orWhere(fn ($d) => $d
+                        ->where('assigned_pic_id', $pic->id)
+                        ->whereNull('community_id')
+                    );
+            }));
     }
 
     protected function claimsQueryKomunitas(Community $community)

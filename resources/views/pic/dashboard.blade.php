@@ -32,12 +32,12 @@
     </section>
 
     {{-- Community Tabs --}}
-    @if($communities->isNotEmpty())
+    @if($communities->isNotEmpty() || $hasDirectVouchers)
     <div class="overflow-x-auto pb-1">
         <div class="flex gap-2 min-w-max">
             <a href="{{ route('pic.dashboard', $filterParams) }}"
-               class="rounded-full px-5 py-2.5 text-sm font-semibold transition {{ !$activeCommunityId ? 'bg-[#1a3628] text-[#f0ebe0]' : 'border border-[#c8c3b8] bg-white text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628]' }}">
-                Semua Komunitas
+               class="rounded-full px-5 py-2.5 text-sm font-semibold transition {{ !$activeCommunityId && !$langsung ? 'bg-[#1a3628] text-[#f0ebe0]' : 'border border-[#c8c3b8] bg-white text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628]' }}">
+                Semua
             </a>
             @foreach($communities as $community)
             <a href="{{ route('pic.dashboard', array_merge($filterParams, ['community_id' => $community->id])) }}"
@@ -45,6 +45,12 @@
                 {{ $community->name }}
             </a>
             @endforeach
+            @if($hasDirectVouchers)
+            <a href="{{ route('pic.dashboard', array_merge($filterParams, ['langsung' => 1])) }}"
+               class="rounded-full px-5 py-2.5 text-sm font-semibold transition {{ $langsung ? 'bg-[#1a3628] text-[#f0ebe0]' : 'border border-[#c8c3b8] bg-white text-stone-700 hover:border-[#1a3628] hover:text-[#1a3628]' }}">
+                Langsung
+            </a>
+            @endif
         </div>
     </div>
     @endif
@@ -69,27 +75,40 @@
     </section>
 
     {{-- Export Voucher PDF --}}
-    @if($communities->isNotEmpty())
+    @if($communities->isNotEmpty() || $hasDirectVouchers)
     <section class="rounded-[1.8rem] border border-[#e5e0d4] bg-white p-6 shadow-sm">
-        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div class="flex flex-col gap-5">
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-400">Export Voucher</p>
-                <h3 class="mt-1.5 text-lg font-bold text-[#1a3628]">Unduh PDF voucher per komunitas</h3>
-                <p class="mt-1 text-sm text-stone-500">Satu file ZIP berisi satu PDF per voucher untuk komunitas yang dipilih.</p>
+                <h3 class="mt-1.5 text-lg font-bold text-[#1a3628]">Unduh PDF voucher</h3>
+                <p class="mt-1 text-sm text-stone-500">Satu file ZIP berisi satu PDF per voucher.</p>
             </div>
-            <form method="GET" action="{{ route('pic.vouchers.export-pdf') }}" class="flex flex-wrap items-center gap-3">
-                <select name="community_id" required
-                    class="rounded-2xl border border-stone-300 px-4 py-3 text-sm min-w-[200px]">
-                    <option value="">Pilih komunitas…</option>
-                    @foreach($communities as $community)
-                        <option value="{{ $community->id }}">{{ $community->name }}</option>
-                    @endforeach
-                </select>
-                <button type="submit"
-                    class="rounded-full bg-[#1a3628] px-5 py-3 text-sm font-semibold text-[#e8a23e] transition hover:bg-[#0f2d1e]">
-                    Download ZIP
-                </button>
-            </form>
+            <div class="flex flex-wrap gap-3">
+                @if($communities->isNotEmpty())
+                <form method="GET" action="{{ route('pic.vouchers.export-pdf') }}" class="flex flex-wrap items-center gap-3">
+                    <select name="community_id" required
+                        class="rounded-2xl border border-stone-300 px-4 py-3 text-sm min-w-[200px]">
+                        <option value="">Pilih komunitas…</option>
+                        @foreach($communities as $community)
+                            <option value="{{ $community->id }}">{{ $community->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit"
+                        class="rounded-full bg-[#1a3628] px-5 py-3 text-sm font-semibold text-[#e8a23e] transition hover:bg-[#0f2d1e]">
+                        Download ZIP Komunitas
+                    </button>
+                </form>
+                @endif
+                @if($hasDirectVouchers)
+                <form method="GET" action="{{ route('pic.vouchers.export-pdf') }}">
+                    <input type="hidden" name="langsung" value="1">
+                    <button type="submit"
+                        class="rounded-full border border-[#1a3628] px-5 py-3 text-sm font-semibold text-[#1a3628] transition hover:bg-[#1a3628] hover:text-[#e8a23e]">
+                        Download ZIP Langsung
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
     </section>
     @endif
@@ -131,6 +150,9 @@
             <form method="GET" class="mt-5 flex flex-wrap gap-3">
                 @if($activeCommunityId)
                     <input type="hidden" name="community_id" value="{{ $activeCommunityId }}">
+                @endif
+                @if($langsung)
+                    <input type="hidden" name="langsung" value="1">
                 @endif
                 <input type="date" name="date_from" value="{{ request('date_from') }}"
                     class="rounded-2xl border border-stone-300 px-4 py-3 text-sm">
