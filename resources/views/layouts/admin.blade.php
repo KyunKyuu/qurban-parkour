@@ -82,6 +82,10 @@
                         <span class="text-xs font-bold uppercase tracking-[0.2em]">KM</span>
                         <span class="font-medium">Komunitas</span>
                     </a>
+                    <a href="{{ route('admin.sales.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.sales.*') ? 'bg-orange-400 text-white' : 'hover:bg-white/5 text-emerald-100' }}">
+                        <span class="text-xs font-bold uppercase tracking-[0.2em]">SL</span>
+                        <span class="font-medium">Sales (PIC Kasie)</span>
+                    </a>
                     <a href="{{ route('admin.fund-verification.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('admin.fund-verification.*') ? 'bg-orange-400 text-white' : 'hover:bg-white/5 text-emerald-100' }}">
                         <span class="text-xs font-bold uppercase tracking-[0.2em]">TR</span>
                         <span class="font-medium">Verifikasi Transfer</span>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Admin\PicController;
 use App\Http\Controllers\Admin\CommunityController;
+use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\InitialVoucherController;
 use App\Http\Controllers\Admin\InitialVoucherAssignController;
@@ -46,6 +47,10 @@ Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')-
     // Communities
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
     Route::get('/communities/{id}', [CommunityController::class, 'show'])->name('communities.show');
+
+    // Sales (PIC Kasie direct vouchers)
+    Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+    Route::get('/sales/{id}', [SalesController::class, 'show'])->name('sales.show');
 
     // Legacy merchant tools kept as retired routes for compatibility
     Route::prefix('merchants')->name('merchants.')->group(function () {

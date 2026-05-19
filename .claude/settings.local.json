@@ -15,7 +15,9 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(php -m)",
       "Bash(php -r \"echo QR_encode\\('test', 0, 'L'\\);\")",
-      "Bash(find C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\app -type f -name \"*.php\" | xargs grep -l \"patungan_target\" 2>nul)"
+      "Bash(find C:\\\\Project\\\\Laravel\\\\ramadhan-voucher\\\\app -type f -name \"*.php\" | xargs grep -l \"patungan_target\" 2>nul)",
+      "Bash(Select-String -Pattern \"kasie|Kasie|pic.*komunitas|PicKomunitas\" -List)",
+      "Bash(php -l app/Http/Controllers/Admin/SalesController.php)"
     ]
   }
 }
