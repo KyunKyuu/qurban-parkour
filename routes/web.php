@@ -15,9 +15,9 @@ use App\Http\Controllers\LegacyFlowController;
 
 // Landing Page
 Route::get('/', function () {
-    $pricePerSheep  = 2_500_000;
+    $pricePerSheep  = 3_000_000;
     $totalSheep     = 21;
-    $targetAmount   = $pricePerSheep * $totalSheep; // 52_500_000
+    $targetAmount   = $pricePerSheep * $totalSheep; // 63_000_000
 
     $totalCollected = (float) \App\Models\Claim::where('verification_status', 'VERIFIED')
         ->whereIn('category_type', ['DOMBA', 'PATUNGAN'])
