@@ -76,7 +76,21 @@
                     </div>
                     <div>
                         <dt class="text-stone-500">Bukti Transfer</dt>
-                        <dd class="mt-1 break-all text-stone-700">{{ $claim->transfer_proof_path ?: '-' }}</dd>
+                        <dd class="mt-1">
+                            @if($claim->transfer_proof_path)
+                                <a href="{{ Storage::url($claim->transfer_proof_path) }}" target="_blank" class="block">
+                                    <img src="{{ Storage::url($claim->transfer_proof_path) }}"
+                                         alt="Bukti Transfer"
+                                         class="mt-2 max-h-72 w-full rounded-2xl object-contain border border-stone-200 bg-stone-50 cursor-zoom-in">
+                                </a>
+                                <a href="{{ Storage::url($claim->transfer_proof_path) }}" target="_blank"
+                                   class="mt-2 inline-block text-xs text-emerald-700 underline hover:text-emerald-900">
+                                    Buka gambar penuh →
+                                </a>
+                            @else
+                                <span class="text-stone-400">-</span>
+                            @endif
+                        </dd>
                     </div>
                 </dl>
             </div>
