@@ -19,9 +19,9 @@ Route::get('/', function () {
     $totalSheep     = 21;
     $targetAmount   = $pricePerSheep * $totalSheep; // 63_000_000
 
-    $totalCollected = (float) \App\Models\Claim::where('verification_status', 'VERIFIED')
-        ->whereIn('category_type', ['DOMBA', 'PATUNGAN'])
-        ->sum('contribution_amount');
+    $totalCollected = (float) \App\Models\Claim::whereIn('category_type', ['DOMBA', 'PATUNGAN'])
+        ->selectRaw('COALESCE(SUM(COALESCE(contribution_amount, COALESCE(zakat_fitrah_amount,0) + COALESCE(zakat_mal_amount,0) + COALESCE(infaq_amount,0) + COALESCE(sodaqoh_amount,0))), 0) as total')
+        ->value('total');
 
     $progressPct  = (int) min(100, round($totalCollected / $targetAmount * 100));
     $sheepCurrent = (int) min($totalSheep, floor($totalCollected / $pricePerSheep));

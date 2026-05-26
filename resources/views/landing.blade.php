@@ -324,8 +324,7 @@ $clipInsetTop = 100 - $progressPct;
                 </div>
 
                 @php
-                $participantCount = \App\Models\Claim::where('verification_status', 'VERIFIED')
-                    ->whereIn('category_type', ['DOMBA', 'PATUNGAN'])->count();
+                $participantCount = \App\Models\Claim::whereIn('category_type', ['DOMBA', 'PATUNGAN'])->count();
                 $terkumpulLabel   = $totalCollected >= 1_000_000
                     ? 'Rp ' . number_format($totalCollected / 1_000_000, 1, ',', '.') . ' Jt'
                     : 'Rp ' . number_format($totalCollected, 0, ',', '.');
